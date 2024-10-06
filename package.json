@@ -2,7 +2,7 @@
 	"name": "minio",
 	"displayName": "MinIO File Uploader",
 	"description": "A VS Code Extension aimed at making upload files and images to MinIO an easy thing.",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"publisher": "Benjamin Gross",
 	"preview": false,
 	"license": "MIT",
