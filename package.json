@@ -60,6 +60,7 @@
             "view/item/context": [
                 {
                     "command": "minio.download-local-disk-image",
+                    "when": "view == ftpExplorer",
                     "group": "inline"
                 }
 			],
