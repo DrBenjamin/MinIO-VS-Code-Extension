@@ -1,0 +1,1 @@
+{"version":3,"file":"format-image-link.js","sourceRoot":"","sources":["../../src/utils/format-image-link.ts"],"names":[],"mappings":";;;AAAO,MAAM,eAAe,GAAG,CAAC,SAAiB,EAAE,MAAmC,EAAE,EAAE;IACtF,QAAQ,MAAM,EAAE;QACZ,KAAK,MAAM;YACP,OAAO,aAAa,SAAS,IAAI,CAAC;QACtC,KAAK,UAAU;YACX,OAAO,YAAY,SAAS,GAAG,CAAC;QACpC;YACI,OAAO,SAAS,CAAC;KACxB;AACL,CAAC,CAAC;AATW,QAAA,eAAe,mBAS1B"}
