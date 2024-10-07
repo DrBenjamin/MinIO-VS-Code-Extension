@@ -97,8 +97,8 @@
 				"title": "Upload file from local disk to MinIO",
 				"category": "minio",
 				"icon": {
-					"light": "resources/light/folder.svg",
-					"dark": "resources/dark/folder.svg"
+					"light": "resources/light/upload.svg",
+					"dark": "resources/dark/upload.svg"
 				}
 			},
 			{
@@ -106,8 +106,8 @@
 				"title": "Download MinIO file to local disk",
 				"category": "minio",
 				"icon": {
-					"light": "resources/light/document.svg",
-					"dark": "resources/dark/document.svg"
+					"light": "resources/light/download.svg",
+					"dark": "resources/dark/download.svg"
 				}
 			},
 			{
@@ -115,8 +115,8 @@
 				"title": "Delete MinIO file",
 				"category": "minio",
 				"icon": {
-					"light": "resources/light/boolean.svg",
-					"dark": "resources/dark/boolean.svg"
+					"light": "resources/light/delete.svg",
+					"dark": "resources/dark/delete.svg"
 				}
 			},
 			{
