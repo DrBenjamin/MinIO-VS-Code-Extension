@@ -2,7 +2,7 @@
 	"name": "minio",
 	"displayName": "MinIO File Uploader",
 	"description": "A VS Code Extension aimed at making upload files and images to MinIO an easy thing.",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"publisher": "Benjamin Gross",
 	"preview": false,
 	"license": "MIT",
@@ -18,9 +18,10 @@
 		"Data Science"
 	],
 	"activationEvents": [
-        "onCommand:your-extension.upload-local-disk-image",
-        "onCommand:your-extension.upload-clipboard-image",
-        "onCommand:your-extension.download-local-disk-image"
+		"onCommand:your-extension.upload-local-disk-image",
+		"onCommand:your-extension.upload-clipboard-image",
+		"onCommand:your-extension.download-local-disk-image",
+		"onCommand:your-extension.delete-local-disk-image"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -37,14 +38,14 @@
 			"minio": [
 				{
 					"id": "ftpExplorer",
-                    "title": "MinIO",
+					"title": "MinIO",
 					"name": "Files",
 					"icon": "media/dep.svg",
 					"contextualTitle": "MinIO"
 				}
 			]
 		},
-        "menus": {
+		"menus": {
 			"view/title": [
 				{
 					"command": "ftpExplorer.refresh",
@@ -57,12 +58,17 @@
 					"group": "navigation"
 				}
 			],
-            "view/item/context": [
+			"view/item/context": [
+				{
+					"command": "minio.download-local-disk-image",
+					"when": "view == ftpExplorer",
+					"group": "inline"
+				},
                 {
-                    "command": "minio.download-local-disk-image",
-                    "when": "view == ftpExplorer",
-                    "group": "inline"
-                }
+					"command": "minio.delete-local-disk-image",
+					"when": "view == ftpExplorer",
+					"group": "inline"
+				}
 			],
 			"editor/context": [
 				{
@@ -90,18 +96,27 @@
 				"command": "minio.upload-local-disk-image",
 				"title": "Upload file from local disk to MinIO",
 				"category": "minio",
-                "icon": {
+				"icon": {
 					"light": "resources/light/folder.svg",
 					"dark": "resources/dark/folder.svg"
 				}
 			},
-            {
+			{
 				"command": "minio.download-local-disk-image",
 				"title": "Download MinIO file to local disk",
 				"category": "minio",
-                "icon": {
+				"icon": {
 					"light": "resources/light/document.svg",
 					"dark": "resources/dark/document.svg"
+				}
+			},
+			{
+				"command": "minio.delete-local-disk-image",
+				"title": "Delete MinIO file",
+				"category": "minio",
+				"icon": {
+					"light": "resources/light/boolean.svg",
+					"dark": "resources/dark/boolean.svg"
 				}
 			},
 			{
@@ -145,7 +160,7 @@
 						"markdownDescription": "Subdirectory in the specific bucket to save files.\n\n  e.g. `images/`",
 						"order": 4
 					},
-                    "minio.minio.download.directory": {
+					"minio.minio.download.directory": {
 						"default": "/Users/ben/Downloads/",
 						"type": "string",
 						"markdownDescription": "Subdirectory in the specific bucket to save files.\n\n  e.g. `images/`",
@@ -211,6 +226,7 @@
 		"minio": "^7.1.3",
 		"mkdirp": "^0.5.1",
 		"node-fetch": "^3.0.0",
-		"rimraf": "^2.6.2"
+		"rimraf": "^2.6.2",
+		"vsce": "^2.15.0"
 	}
 }

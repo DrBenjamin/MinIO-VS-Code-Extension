@@ -18,14 +18,7 @@ export class ImageDownloadService {
 
     async download(fileName: string): Promise<void> {
         const { minioClientOption } = MinioConfigurationProvider.minioConfiguration;
-        //const client = new Minio.Client(minioClientOption);
-        const client = new Minio.Client({
-            endPoint: '127.0.0.1',
-            port: 9000,
-            useSSL: false,
-            accessKey: 'health',
-            secretKey: 'NOentry#23'
-        });
+        const client = new Minio.Client(minioClientOption);
         const config = vscode.workspace.getConfiguration('minio');
         const bucketName = config.get<string>('minio.upload.bucketName', 'templategenerator');
         const filePath= config.get<string>('minio.download.directory', '/Users/ben/Downloads');

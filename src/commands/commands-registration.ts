@@ -3,6 +3,7 @@ import { AppContext } from '../utils/app-context';
 import { uploadClipboardImage } from './upload-clipboard-image';
 import { uploadLocalDiskImage } from './upload-local-disk-image';
 import { downloadLocalDiskImage } from './download-local-disk-image';
+import { deleteLocalDiskImage } from './delete-local-disk-image';
 
 export const registerCommands = () => {
     AppContext.extContext.subscriptions.push(
@@ -15,6 +16,14 @@ export const registerCommands = () => {
                 return;
             }
             downloadLocalDiskImage(resource);
+        }),
+        commands.registerCommand(`${AppContext.extName}.delete-local-disk-image`, (resource: Uri) => {
+            console.log('Resource provided:', resource.fsPath);
+            if (!resource) {
+                window.showErrorMessage('No resource provided for deletion.');
+                return;
+            }
+            deleteLocalDiskImage(resource);
         })
     );
 };
