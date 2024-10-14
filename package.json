@@ -2,10 +2,10 @@
 	"name": "minio",
 	"displayName": "MinIO",
 	"description": "A VS Code extension aimed at making managing files in a MinIO data lake an easy thing.",
-	"version": "1.0.1",
+	"version": "1.1.0",
 	"publisher": "seriousbenentertainment",
 	"preview": false,
-    "icon": "resources/dep.png",
+	"icon": "resources/dep.png",
 	"license": "MIT",
 	"repository": {
 		"type": "github",
@@ -64,7 +64,7 @@
 					"when": "view == MinIOExplorer",
 					"group": "inline"
 				},
-                {
+				{
 					"command": "minio.delete",
 					"when": "view == MinIOExplorer",
 					"group": "inline"
