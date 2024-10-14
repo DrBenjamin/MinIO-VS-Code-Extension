@@ -2,7 +2,7 @@
 	"name": "minio",
 	"displayName": "MinIO",
 	"description": "A VS Code extension aimed at making managing files in a MinIO data lake an easy thing.",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"publisher": "seriousbenentertainment",
 	"preview": false,
     "icon": "resources/dep.png",
@@ -19,9 +19,9 @@
 		"Data Science"
 	],
 	"activationEvents": [
-		"onCommand:your-extension.upload",
-		"onCommand:your-extension.download",
-		"onCommand:your-extension.delete"
+		"onCommand:minio.upload",
+		"onCommand:minio.download",
+		"onCommand:minio.delete"
 	],
 	"main": "./out/extension.js",
 	"contributes": {

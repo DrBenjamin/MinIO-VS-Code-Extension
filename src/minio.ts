@@ -17,10 +17,11 @@ export class MinIOModel {
     constructor(readonly host: string, private user: string, private password: string, private bucket: string = 'bucket') {
         const url = new URL(host);
         const port = url.port ? parseInt(url.port, 10) : 9000;
+        const useSSL = url.protocol === 'https:';
         this.minioClient = new Minio.Client({
             endPoint: url.hostname,
             port: port,
-            useSSL: false,
+            useSSL: useSSL,
             accessKey: user,
             secretKey: password,
         });
