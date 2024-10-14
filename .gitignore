@@ -1,3 +1,4 @@
 node_modules
 out
 certs
+.DS_Store
