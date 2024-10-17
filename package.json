@@ -9,7 +9,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "github",
-		"url": "https://github.com",
+		"url": "https://github.com/DrBenjamin/MinIO-VS-Code-Extension",
 		"directory": "/DrBenjamin/MinIO-VS-Code-Extension"
 	},
 	"engines": {
