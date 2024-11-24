@@ -2,6 +2,9 @@
 
 All notable changes to the "MinIO VS Code" extension will be documented in this file.
 
+## [1.7.0]
+- Fixed issue with copying URL for files in subfolders
+
 ## [1.6.0]
 - Added suport for subfolder files
 - Added copy URL feature

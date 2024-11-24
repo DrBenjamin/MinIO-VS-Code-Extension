@@ -1,4 +1,4 @@
-import { Uri} from 'vscode';
+import { Uri } from 'vscode';
 import path = require('path');
 import { handleFileCopyied } from '../utils/handle-file-copyied';
 import { MinioConfigurationProvider } from '../services/minio-configuration-prodiver.service';
@@ -13,10 +13,10 @@ export const copyFileURL = async (resource: Uri) => {
         folderName = `/${folderName}`;
     }
     const fileName = resourcePath.slice(incorrectPrefix.length).replace('/', '');
+    const fileURL = `${folderName}/${fileName}`;
     const { bucketName, minioClientOption } = MinioConfigurationProvider.minioConfiguration;
-    const filePath = fileName.startsWith('/') ? fileName : `/${fileName}`;
     const { port, endPoint } = minioClientOption;
-    const fileLink = `${minioClientOption.useSSL ? 'https' : 'http'}://${endPoint}${ port == null || port === 80 || port === 443 ? '' : ':' + port }/${bucketName}${filePath
+    const fileLink = `${minioClientOption.useSSL ? 'https' : 'http'}://${endPoint}${ port == null || port === 80 || port === 443 ? '' : ':' + port }/${bucketName}${fileURL
             .split('/')
             .map((x: string) => encodeURI(x))
             .join('/')}`;
