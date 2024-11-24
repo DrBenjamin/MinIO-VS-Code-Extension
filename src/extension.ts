@@ -4,13 +4,14 @@ import { AppContext } from './utils/app-context';
 import { MinIOModel, MinIOTreeDataProvider } from './minio';
 import { uploadLocalFile } from './commands/upload';
 import { downloadLocalFile } from './commands/download';
+import { copyFileURL } from './commands/copy';
 import { deleteLocalFile } from './commands/delete';
 
 export function activate(context: ExtensionContext) {
     AppContext.init(context);
     MinioConfigurationProvider.migrateOld();
 
-    // Konfigurationseinstellungen lesen
+    // Read configuration
     const config = workspace.getConfiguration('minio');
     const serverAddress = config.get<string>('minio.server.address', '127.0.0.1');
     const accessKey = config.get<string>('minio.credential.accessKey', 'user');
@@ -37,6 +38,14 @@ export function activate(context: ExtensionContext) {
         }
         downloadLocalFile(resource);
     });
+    commands.registerCommand(`${AppContext.extName}.copy`, (resource: Uri) => {
+        console.log('Resource provided:', resource.fsPath);
+        if (!resource) {
+            window.showErrorMessage('No resource provided for copy link.');
+            return;
+        }
+        copyFileURL(resource);
+    });
     commands.registerCommand(`${AppContext.extName}.delete`, async (resource: Uri) => {
         console.log('Resource provided:', resource.fsPath);
         if (!resource) {
@@ -48,5 +57,5 @@ export function activate(context: ExtensionContext) {
     });
 }
 
-// this method is called when your extension is deactivated
+// This method is called when the extension is deactivated
 export function deactivate() {}

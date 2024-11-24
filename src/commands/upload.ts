@@ -2,7 +2,7 @@ import { MessageOptions, ProgressLocation, window } from 'vscode';
 import * as fs from 'fs';
 import { fileUploadService } from '../services/upload.service';
 import path = require('path');
-import { handleImageUploaded } from '../utils/handle-file-uploaded';
+import { handleFileUploaded } from '../utils/handle-file-uploaded';
 
 export const uploadLocalFile = async () => {
     const fileUri = ((await window.showOpenDialog({
@@ -14,13 +14,13 @@ export const uploadLocalFile = async () => {
     }
     const { fsPath: filePath } = fileUri;
     const fileName = path.basename(filePath);
-    const imageLink = await window.withProgress(
+    const fileLink = await window.withProgress(
         { title: 'Uploading file', location: ProgressLocation.Notification },
         async p => {
             p.report({ increment: 10 });
-            let imageLink = '';
+            let fileLink = '';
             try {
-                imageLink = await fileUploadService.upload(fs.createReadStream(filePath), fileName);
+                fileLink = await fileUploadService.upload(fs.createReadStream(filePath), fileName);
             } catch (err) {
                 window.showErrorMessage('Failed to upload file', {
                     detail: err instanceof Error ? err.message : JSON.stringify(err),
@@ -29,8 +29,8 @@ export const uploadLocalFile = async () => {
             }
 
             p.report({ increment: 100 });
-            return imageLink;
+            return fileLink;
         }
     );
-    handleImageUploaded(imageLink);
+    handleFileUploaded(fileLink);
 };

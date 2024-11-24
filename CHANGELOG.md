@@ -2,6 +2,10 @@
 
 All notable changes to the "MinIO VS Code" extension will be documented in this file.
 
+## [1.5.0]
+- Added suport for subfolder files
+- Added copy URL feature
+
 ## [1.4.0]
 - Added support for tls connections
   

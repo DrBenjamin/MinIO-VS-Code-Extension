@@ -21,7 +21,8 @@
 	"activationEvents": [
 		"onCommand:minio.upload",
 		"onCommand:minio.download",
-		"onCommand:minio.delete"
+		"onCommand:minio.delete",
+        "onCommand:minio.copy"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -68,6 +69,11 @@
 					"command": "minio.delete",
 					"when": "view == MinIOExplorer",
 					"group": "inline"
+				},
+                {
+					"command": "minio.copy",
+					"when": "view == MinIOExplorer",
+					"group": "inline"
 				}
 			]
 		},
@@ -105,6 +111,15 @@
 				"icon": {
 					"light": "resources/light/delete.svg",
 					"dark": "resources/dark/delete.svg"
+				}
+			},
+            {
+				"command": "minio.copy",
+				"title": "Copy MinIO file link",
+				"category": "minio",
+				"icon": {
+					"light": "resources/light/document.svg",
+					"dark": "resources/dark/document.svg"
 				}
 			}
 		],

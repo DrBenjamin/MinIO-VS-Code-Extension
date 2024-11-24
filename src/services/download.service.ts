@@ -16,7 +16,7 @@ export class FileDownloadService {
 
     private constructor() {}
 
-    async download(fileName: string): Promise<void> {
+    async download(fileURL: string, fileName: string): Promise<void> {
         const { minioClientOption } = MinioConfigurationProvider.minioConfiguration;
         const client = new Minio.Client(minioClientOption);
         const config = vscode.workspace.getConfiguration('minio');
@@ -26,7 +26,7 @@ export class FileDownloadService {
         const fileStream = fs.createWriteStream(localFilePath);
 
         let size = 0;
-        const dataStream = await client.getObject(bucketName, fileName);
+        const dataStream = await client.getObject(bucketName, fileURL);
         dataStream.on('data', function (chunk) {
             size += chunk.length;
             fileStream.write(chunk);

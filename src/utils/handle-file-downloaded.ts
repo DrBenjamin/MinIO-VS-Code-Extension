@@ -1,19 +1,19 @@
-import { env, MessageOptions, SnippetString, window } from 'vscode';
+import { env, MessageOptions, window } from 'vscode';
 
-export const handleFileDownloaded = async (imageLink: string) => {
-    const copyOptions = ['Copy Path'];
+export const handleFileDownloaded = async (fileLink: string) => {
+    const copyOptions = ['Copy file name'];
     const selected = await window.showInformationMessage(
         'File downloaded successfully',
         {
             modal: true,
-            detail: imageLink,
+            detail: fileLink,
         } as MessageOptions,
         ...copyOptions
     );
     let textToCopy = '';
     switch (selected) {
         case copyOptions[0]:
-            textToCopy = imageLink;
+            textToCopy = fileLink;
             break;
     }
     if (textToCopy) {

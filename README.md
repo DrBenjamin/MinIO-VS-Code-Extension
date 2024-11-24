@@ -12,7 +12,11 @@ Make sure that the configured bucket name exists in MinIO, otherwise the upload 
 
 ## Main Features
 
+All features are available in the MinIO Extension.
+
 ### MinIO Explorer
+
+Thee MinIO Explorer shows all files in the configured bucket. You can upload, download or delete files from the MinIO server.
 
 ![image](https://github.com/DrBenjamin/MinIO-VS-Code-Extension/blob/22318ac247625080dcf3900f85785840b0aa8d2a/resources/MinIO%20Explorer.png?raw=true)
 
@@ -31,3 +35,7 @@ Download files from MinIO with clicking the download button on a specific file. 
 ### File deleting
 
 Delete files from MinIO with clicking the delete button on a specific file.
+
+### File URL copying
+
+Copy the URL of a file to the clipboard by clicking the copy button on a specific file.

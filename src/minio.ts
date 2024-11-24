@@ -1,20 +1,22 @@
 import * as vscode from 'vscode';
 import * as Minio from 'minio';
-import { basename, dirname } from 'path';
-
-interface IEntry {
-    name: string;
-    type: string;
-}
+import { basename, posix } from 'path';
 
 export interface MinIONode {
     resource: vscode.Uri;
+    label: string;
     isDirectory: boolean;
 }
 
 export class MinIOModel {
     private minioClient: Minio.Client;
-    constructor(readonly host: string, private user: string, private password: string, private bucket: string = 'bucket') {
+
+    constructor(
+        readonly host: string,
+        private user: string,
+        private password: string,
+        private bucket: string = 'bucket'
+    ) {
         const url = new URL(host);
         const port = url.port ? parseInt(url.port, 10) : 9000;
         const useSSL = url.protocol === 'https:';
@@ -27,85 +29,130 @@ export class MinIOModel {
         });
     }
 
-    public connect(): Thenable<Minio.Client> {
+    public connect(): Promise<Minio.Client> {
+        return Promise.resolve(this.minioClient);
+    }
+
+    public async getChildren(node?: MinIONode): Promise<MinIONode[]> {
+        const client = await this.connect();
+
+        // Step 1: Determine and normalize the prefix
+        let prefix = node ? node.resource.path.substring(1) : '';
+        if (prefix && !prefix.endsWith('/')) {
+            prefix += '/';
+        }
+
+        const recursive = true; // Set to true to retrieve all objects
+        const objectsStream = client.listObjectsV2(this.bucket, prefix, recursive);
+
         return new Promise((resolve, reject) => {
-            resolve(this.minioClient);
-        });
-    }
+            const foldersMap: Map<string, MinIONode> = new Map();
+            const filesMap: Map<string, MinIONode[]> = new Map();
 
-    public get roots(): Thenable<MinIONode[]> {
-        return this.connect().then(client => {
-            return new Promise((resolve, reject) => {
-                const data: MinIONode[] = [];
-                const stream = client.listObjects(this.bucket, '', true);
-                stream.on('data', (obj) => {
-                    data.push({ resource: vscode.Uri.parse(`minio://${this.host}/${obj.name}`), isDirectory: false });
-                });
-                stream.on('end', () => {
-                    resolve(data);
-                });
-                stream.on('error', (err) => {
-                    reject(err);
-                });
-            });
-        });
-    }
+            objectsStream.on('data', (obj) => {
+                console.log('Received object:', obj); // Debug log
 
-    public getChildren(node: MinIONode): Thenable<MinIONode[]> {
-        return this.connect().then(client => {
-            return new Promise((resolve, reject) => {
-                const data: MinIONode[] = [];
-                const stream = client.listObjects(this.bucket, node.resource.path.substr(1), true);
-                stream.on('data', (obj) => {
-                    data.push({ resource: vscode.Uri.parse(`${node.resource.path}/${obj.name}`), isDirectory: false });
-                });
-                stream.on('end', () => {
-                    resolve(data);
-                });
-                stream.on('error', (err) => {
-                    reject(err);
-                });
-            });
-        });
-    }
+                if (obj.name) {
+                    // This is a file or a folder without a trailing '/'
+                    const name = obj.name;
 
-    private sort(nodes: MinIONode[]): MinIONode[] {
-        return nodes.sort((n1, n2) => {
-            if (n1.isDirectory && !n2.isDirectory) {
-                return -1;
-            }
+                    // Calculate relative path
+                    const relativePath = name.substring(prefix.length);
+                    console.log(`Relative Path: ${relativePath}`); // Debug log
+    
+                    // Split the relative path into parts
+                    const parts = relativePath.split('/').filter(p => p.length > 0);
+                    console.log(`Path Parts: ${parts}`); // Debug log
 
-            if (!n1.isDirectory && n2.isDirectory) {
-                return 1;
-            }
-
-            return basename(n1.resource.fsPath).localeCompare(basename(n2.resource.fsPath));
-        });
-    }
-
-    public getContent(resource: vscode.Uri): Thenable<string> {
-        return this.connect().then(client => {
-            return new Promise((resolve, reject) => {
-                client.getObject(this.bucket, resource.path.substr(1), (err, stream) => {
-                    if (err) {
-                        return reject(err);
-                    }
-
-                    let string = '';
-                    stream.on('data', (buffer) => {
-                        if (buffer) {
-                            const part = buffer.toString();
-                            string += part;
+                    if (parts.length === 1) {
+                        // This is a file in the current directory
+                        const fileName = parts[0];
+                        const resourceUri = vscode.Uri.parse(`minio://${this.host}/${name}`);
+                        if (!filesMap.has('')) {
+                            filesMap.set('', []);
                         }
-                    });
+                        filesMap.get('')?.push({
+                            resource: resourceUri,
+                            label: fileName,
+                            isDirectory: false
+                        });
+                        console.log(`Added file: ${fileName}`); // Debug log
+                    } else if (parts.length > 1) {
+                        // This is a directory (immediate subfolder)
+                        const folderName = parts[0];
+                        if (!foldersMap.has(folderName)) {
+                            const folderPath = `${prefix}${folderName}/`;
+                            const resourceUri = vscode.Uri.parse(`minio://${this.host}/${folderPath}`);
+                            foldersMap.set(folderName, {
+                                resource: resourceUri,
+                                label: folderName,
+                                isDirectory: true,
+                            });
+                            console.log(`Added folder: ${folderName}`); // Debug log
+                        }
 
-                    stream.on('end', () => {
-                        resolve(string);
-                    });
+                        // Ensure files within this folder are also processed
+                        const subfolderPath = `${prefix}${folderName}/`;
+                        const subfolderRelativePath = name.substring(subfolderPath.length);
+                        const subfolderParts = subfolderRelativePath.split('/').filter(p => p.length > 0);
 
-                    stream.on('error', (err) => {
-                        reject(err);
-                    });
+                        if (subfolderParts.length === 1) {
+                            // This is a file within the subfolder
+                            const subfileName = subfolderParts[0];
+                            //const subfileResourceUri = vscode.Uri.parse(`minio://${this.host}/${name}`);
+                            const fullPath = `${folderName}/${subfileName}`;
+                            const subfileResourceUri = vscode.Uri.parse(`minio://${this.host}/${fullPath}`);
+                            if (!filesMap.has(folderName)) {
+                                filesMap.set(folderName, []);
+                            }
+                            filesMap.get(folderName)?.push({
+                                resource: subfileResourceUri,
+                                label: subfileName,
+                                isDirectory: false
+                            });
+                            console.log(`Added file in subfolder: ${subfileName}`); // Debug log
+                        }
+                    }
+                }
+            });
+
+            objectsStream.on('end', () => {
+                // Combine folders and files
+                const folders = Array.from(foldersMap.values());
+                const files = Array.from(filesMap.values()).flat();
+                //resolve([...folders, ...files]);
+                resolve([...files])
+            });
+
+            objectsStream.on('error', (err) => {
+                console.error('Error listing objects:', err); // Debug log
+                vscode.window.showErrorMessage(`Failed to list objects: ${err.message}`);
+                reject(err);
+            });
+        });
+    }
+
+    public async getContent(resource: vscode.Uri): Promise<string> {
+        const client = await this.connect();
+        const objectName = resource.path.substring(1);
+
+        return new Promise((resolve, reject) => {
+            client.getObject(this.bucket, objectName, (err, dataStream) => {
+                if (err) {
+                    return reject(err);
+                }
+
+                let content = '';
+                dataStream.on('data', (chunk) => {
+                    content += chunk.toString();
+                });
+
+                dataStream.on('end', () => {
+                    resolve(content);
+                });
+
+                dataStream.on('error', (err) => {
+                    reject(err);
                 });
             });
         });
@@ -113,56 +160,74 @@ export class MinIOModel {
 }
 
 export class MinIOTreeDataProvider implements vscode.TreeDataProvider<MinIONode>, vscode.TextDocumentContentProvider {
-    private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
-    readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
-    constructor(private readonly model: MinIOModel) { }
+    private _onDidChangeTreeData: vscode.EventEmitter<MinIONode | undefined | void> = new vscode.EventEmitter<MinIONode | undefined | void>();
+    readonly onDidChangeTreeData: vscode.Event<MinIONode | undefined | void> = this._onDidChangeTreeData.event;
 
-    public refresh(): any {
-        this._onDidChangeTreeData.fire(undefined);
+    constructor(private readonly model: MinIOModel) {}
+
+    public refresh(): void {
+        this._onDidChangeTreeData.fire();
     }
 
     public getTreeItem(element: MinIONode): vscode.TreeItem {
-        return {
-            resourceUri: element.resource,
-            collapsibleState: element.isDirectory ? vscode.TreeItemCollapsibleState.Collapsed : void 0,
-            command: element.isDirectory ? void 0 : {
+        const treeItem = new vscode.TreeItem(element.label);
+        treeItem.resourceUri = element.resource;
+        treeItem.collapsibleState = element.isDirectory
+            ? vscode.TreeItemCollapsibleState.Expanded
+            : vscode.TreeItemCollapsibleState.None;
+
+        if (!element.isDirectory) {
+            treeItem.command = {
                 command: 'MinIOExplorer.openMinIOResource',
+                title: 'Open File',
                 arguments: [element.resource],
-                title: 'Open MinIO Resource'
-            }
-        };
+            };
+        }
+
+        return treeItem;
     }
 
-    public getChildren(element?: MinIONode): MinIONode[] | Thenable<MinIONode[]> {
-        return element ? this.model.getChildren(element) : this.model.roots;
+    public getChildren(element?: MinIONode): Thenable<MinIONode[]> {
+        return this.model.getChildren(element);
     }
 
     public getParent(element: MinIONode): MinIONode | undefined {
-        const parent = element.resource.with({ path: dirname(element.resource.path) });
-        return parent.path !== '//' ? { resource: parent, isDirectory: true } : undefined;
+        const parentPath = posix.dirname(element.resource.path);
+        if (parentPath && parentPath !== '/') {
+            const parentUri = element.resource.with({ path: parentPath });
+            return {
+                resource: parentUri,
+                label: basename(parentPath),
+                isDirectory: true,
+            };
+        }
+        return undefined;
     }
 
-    public provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): vscode.ProviderResult<string> {
-        return this.model.getContent(uri).then(content => content);
+    public provideTextDocumentContent(uri: vscode.Uri): vscode.ProviderResult<string> {
+        return this.model.getContent(uri);
     }
 }
 
 export class MinIOExplorer {
-    private MinIOViewer: vscode.TreeView<MinIONode>;
+    private minioViewer: vscode.TreeView<MinIONode>;
+
     constructor(context: vscode.ExtensionContext) {
         const config = vscode.workspace.getConfiguration('minio');
-        const serverAddress = config.get<string>('minio.server.address', '127.0.0.1');
+        const serverAddress = config.get<string>('minio.server.address', 'http://127.0.0.1:9000');
         const accessKey = config.get<string>('minio.credential.accessKey', 'user');
         const secretKey = config.get<string>('minio.credential.secretKey', 'password');
         const bucketName = config.get<string>('minio.upload.bucketName', 'bucket');
+
         const minioModel = new MinIOModel(serverAddress, accessKey, secretKey, bucketName);
         const treeDataProvider = new MinIOTreeDataProvider(minioModel);
+
         context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('minio', treeDataProvider));
 
-        this.MinIOViewer = vscode.window.createTreeView('MinExplorer', { treeDataProvider });
+        this.minioViewer = vscode.window.createTreeView('MinExplorer', { treeDataProvider });
 
         vscode.commands.registerCommand('MinIOExplorer.refresh', () => treeDataProvider.refresh());
-        vscode.commands.registerCommand('MinIOExplorer.openMinIOResource', resource => this.openResource(resource));
+        vscode.commands.registerCommand('MinIOExplorer.openMinIOResource', (resource) => this.openResource(resource));
         vscode.commands.registerCommand('MinExplorer.revealResource', () => this.reveal());
     }
 
@@ -173,15 +238,18 @@ export class MinIOExplorer {
     private async reveal(): Promise<void> {
         const node = this.getNode();
         if (node) {
-            return this.MinIOViewer.reveal(node);
+            await this.minioViewer.reveal(node);
         }
     }
 
     private getNode(): MinIONode | undefined {
-        if (vscode.window.activeTextEditor) {
-            if (vscode.window.activeTextEditor.document.uri.scheme === 'minio') {
-                return { resource: vscode.window.activeTextEditor.document.uri, isDirectory: false };
-            }
+        const editor = vscode.window.activeTextEditor;
+        if (editor && editor.document.uri.scheme === 'minio') {
+            return {
+                resource: editor.document.uri,
+                label: basename(editor.document.uri.path),
+                isDirectory: false,
+            };
         }
         return undefined;
     }
