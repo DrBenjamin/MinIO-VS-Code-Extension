@@ -2,7 +2,7 @@
 	"name": "minio",
 	"displayName": "MinIO",
 	"description": "A VS Code extension aimed at making managing files in a MinIO data lake an easy thing.",
-	"version": "1.4.0",
+	"version": "1.5.0",
 	"publisher": "seriousbenentertainment",
 	"preview": false,
 	"icon": "resources/dep.png",
@@ -22,7 +22,7 @@
 		"onCommand:minio.upload",
 		"onCommand:minio.download",
 		"onCommand:minio.delete",
-        "onCommand:minio.copy"
+		"onCommand:minio.copy"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -70,7 +70,7 @@
 					"when": "view == MinIOExplorer",
 					"group": "inline"
 				},
-                {
+				{
 					"command": "minio.copy",
 					"when": "view == MinIOExplorer",
 					"group": "inline"
@@ -113,7 +113,7 @@
 					"dark": "resources/dark/delete.svg"
 				}
 			},
-            {
+			{
 				"command": "minio.copy",
 				"title": "Copy MinIO file link",
 				"category": "minio",
