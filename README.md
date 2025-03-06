@@ -1,6 +1,6 @@
 # MinIO VS Code Extension
 
-A MinIO plugin for quickly uploading, downloading or deleting images on a Minio server in VS Code.
+A MinIO plugin for quickly uploading, downloading or deleting images on a Minio server in VS Code. Find the plugin on [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=seriousbenentertainment.minio).
 
 ## Instructions
 
