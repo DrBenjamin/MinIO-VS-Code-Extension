@@ -152,11 +152,17 @@
 						"markdownDescription": "A bucket where files will be uploaded to.",
 						"order": 3
 					},
+					"minio.minio.upload.directory": {
+						"default": "",
+						"type": "string",
+						"markdownDescription": "Subdirectory inside the bucket to start browsing (e.g., 'folder1/subfolder').",
+						"order": 4
+					},
 					"minio.minio.download.directory": {
 						"default": "/Users/username/Downloads/",
 						"type": "string",
 						"markdownDescription": "Directory to save downloaded files.\n\n  e.g. `/Users/username/Downloads/`",
-						"order": 4
+						"order": 5
 					}
 				}
 			}

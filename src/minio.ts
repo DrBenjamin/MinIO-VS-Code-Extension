@@ -10,13 +10,23 @@ export interface MinIONode {
 
 export class MinIOModel {
     private minioClient: Minio.Client;
+    private subDirectory: string;
 
+    /**
+     * @param host MinIO server URL
+     * @param user Access key
+     * @param password Secret key
+     * @param bucket Bucket name to browse
+     * @param subDirectory Optional subdirectory inside the bucket to start browsing
+     */
     constructor(
         readonly host: string,
         private user: string,
         private password: string,
-        private bucket: string = 'bucket'
+        private bucket: string = 'bucket',
+        subDirectory: string = ''
     ) {
+        this.subDirectory = subDirectory;
         const url = new URL(host);
         const port = url.port ? parseInt(url.port, 10) : 9000;
         const useSSL = url.protocol === 'https:';
@@ -36,8 +46,8 @@ export class MinIOModel {
     public async getChildren(node?: MinIONode): Promise<MinIONode[]> {
         const client = await this.connect();
 
-        // Step 1: Determine and normalize the prefix
-        let prefix = node ? node.resource.path.substring(1) : '';
+        // Step 1: Determine and normalize the prefix (start at subDirectory if root)
+        let prefix = node ? node.resource.path.substring(1) : this.subDirectory;
         if (prefix && !prefix.endsWith('/')) {
             prefix += '/';
         }
@@ -59,7 +69,7 @@ export class MinIOModel {
                     // Calculate relative path
                     const relativePath = name.substring(prefix.length);
                     console.log(`Relative Path: ${relativePath}`); // Debug log
-    
+
                     // Split the relative path into parts
                     const parts = relativePath.split('/').filter(p => p.length > 0);
                     console.log(`Path Parts: ${parts}`); // Debug log
@@ -68,6 +78,7 @@ export class MinIOModel {
                         // This is a file in the current directory
                         const fileName = parts[0];
                         const resourceUri = vscode.Uri.parse(`minio://${this.host}/${name}`);
+
                         if (!filesMap.has('')) {
                             filesMap.set('', []);
                         }
@@ -121,7 +132,7 @@ export class MinIOModel {
                 const folders = Array.from(foldersMap.values());
                 const files = Array.from(filesMap.values()).flat();
                 //resolve([...folders, ...files]);
-                resolve([...files])
+                resolve([...files]);
             });
 
             objectsStream.on('error', (err) => {

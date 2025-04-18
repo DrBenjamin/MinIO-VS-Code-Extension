@@ -2,6 +2,9 @@
 
 All notable changes to the "MinIO VS Code" extension will be documented in this file.
 
+## [1.8.0]
+ - Added option to define subfolder - referring to [Feature Request](https://github.com/DrBenjamin/MinIO-VS-Code-Extension/issues/2)
+ 
 ## [1.7.0]
 - Fixed issue with copying URL for files in subfolders
 

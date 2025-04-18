@@ -16,10 +16,13 @@ export function activate(context: ExtensionContext) {
     const serverAddress = config.get<string>('minio.server.address', '127.0.0.1');
     const accessKey = config.get<string>('minio.credential.accessKey', 'user');
     const secretKey = config.get<string>('minio.credential.secretKey', 'password');
+    /** Bucket to browse */
     const bucketName = config.get<string>('minio.upload.bucketName', 'bucket');
+    /** Optional subdirectory inside the bucket to start browsing */
+    const subDirectory = config.get<string>('minio.upload.directory', '');
 
     // MinIO Explorer
-    const ftpModel = new MinIOModel(serverAddress, accessKey, secretKey, bucketName);
+    const ftpModel = new MinIOModel(serverAddress, accessKey, secretKey, bucketName, subDirectory);
     const ftpTreeDataProvider = new MinIOTreeDataProvider(ftpModel);
     window.registerTreeDataProvider('MinIOExplorer', ftpTreeDataProvider);
     commands.registerCommand('MinIOExplorer.refresh', () => ftpTreeDataProvider.refresh());
