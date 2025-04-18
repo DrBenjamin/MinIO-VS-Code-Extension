@@ -2,6 +2,9 @@
 
 All notable changes to the "MinIO VS Code" extension will be documented in this file.
 
+## [1.8.1]
+- Fixed upload issue with subfolder files
+
 ## [1.8.0]
  - Added option to define subfolder - referring to [Feature Request](https://github.com/DrBenjamin/MinIO-VS-Code-Extension/issues/2)
  
