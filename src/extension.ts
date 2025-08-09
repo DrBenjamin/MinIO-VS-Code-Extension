@@ -31,24 +31,36 @@ export function activate(context: ExtensionContext) {
         await uploadLocalFile(node);
         commands.executeCommand('MinIOExplorer.refresh');
     });
-    commands.registerCommand(`${AppContext.extName}.download`, (resource: Uri) => {
-        console.log('Resource provided:', resource.fsPath);
+    // These commands can be invoked from a tree item context menu. VS Code passes the tree element (MinIONode),
+    // not the underlying Uri, so we normalize the argument here.
+    const normalizeToUri = (arg: any): Uri | undefined => {
+        if (!arg) return undefined;
+        if (arg instanceof Uri) return arg;
+        if (arg.resource instanceof Uri) return arg.resource as Uri;
+        return undefined;
+    };
+
+    commands.registerCommand(`${AppContext.extName}.download`, (arg: any) => {
+        const resource = normalizeToUri(arg);
+        console.log('Download command resource:', resource?.toString());
         if (!resource) {
             window.showErrorMessage('No resource provided for download.');
             return;
         }
         downloadLocalFile(resource);
     });
-    commands.registerCommand(`${AppContext.extName}.copy`, (resource: Uri) => {
-        console.log('Resource provided:', resource.fsPath);
+    commands.registerCommand(`${AppContext.extName}.copy`, (arg: any) => {
+        const resource = normalizeToUri(arg);
+        console.log('Copy command resource:', resource?.toString());
         if (!resource) {
             window.showErrorMessage('No resource provided for copy link.');
             return;
         }
         copyFileURL(resource);
     });
-    commands.registerCommand(`${AppContext.extName}.delete`, async (resource: Uri) => {
-        console.log('Resource provided:', resource.fsPath);
+    commands.registerCommand(`${AppContext.extName}.delete`, async (arg: any) => {
+        const resource = normalizeToUri(arg);
+        console.log('Delete command resource:', resource?.toString());
         if (!resource) {
             window.showErrorMessage('No resource provided for deletion.');
             return;

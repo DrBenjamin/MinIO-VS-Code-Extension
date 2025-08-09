@@ -13,6 +13,7 @@ export class MinIOModel {
     private minioClient: Minio.Client;
     private subDirectory: string;
     private currentBucket: string | null = null;
+    private uriAuthority: string; // sanitized host authority used in minio:// URIs
 
     /**
      * @param host MinIO server URL
@@ -30,13 +31,28 @@ export class MinIOModel {
     ) {
         this.subDirectory = subDirectory;
         this.currentBucket = bucket;
-        const url = new URL(host);
-        const port = url.port ? parseInt(url.port, 10) : 9000;
-        const useSSL = url.protocol === 'https:';
+        let endPoint = host;
+        let port = 9000;
+        let useSSL = false;
+        try {
+            const normalized = /^(https?:\/\/)/.test(host) ? host : `http://${host}`;
+            const url = new URL(normalized);
+            endPoint = url.hostname;
+            port = url.port ? parseInt(url.port, 10) : (url.protocol === 'https:' ? 443 : 80);
+            useSSL = url.protocol === 'https:';
+        } catch {
+            // treat host as raw endpoint (host[:port]) maybe
+            const hostParts = host.split(':');
+            if (hostParts.length === 2 && !isNaN(Number(hostParts[1]))) {
+                endPoint = hostParts[0];
+                port = Number(hostParts[1]);
+            }
+        }
+        this.uriAuthority = endPoint + (port && port !== 80 && port !== 443 ? `:${port}` : '');
         this.minioClient = new Minio.Client({
-            endPoint: url.hostname,
-            port: port,
-            useSSL: useSSL,
+            endPoint,
+            port,
+            useSSL,
             accessKey: user,
             secretKey: password,
         });
@@ -51,7 +67,7 @@ export class MinIOModel {
         try {
             const buckets = await client.listBuckets();
             return buckets.map(bucket => ({
-                resource: vscode.Uri.parse(`minio://${this.host}/${bucket.name}/`),
+                resource: vscode.Uri.parse(`minio://${this.uriAuthority}/${bucket.name}/`),
                 label: bucket.name,
                 isDirectory: true,
                 isBucket: true
@@ -116,43 +132,56 @@ export class MinIOModel {
             const children: MinIONode[] = [];
             const seenFolders = new Set<string>();
 
-            objectsStream.on('data', (obj) => {
+            objectsStream.on('data', (obj: any) => {
+                // Folders (common prefixes) are returned with a 'prefix' property when recursive=false
+                if (obj.prefix) {
+                    const folderFullPath: string = obj.prefix; // e.g. 'folder1/' or 'folder1/sub2/'
+                    // Derive folder name relative to current prefix
+                    const withoutCurrentPrefix = folderFullPath.substring(prefix.length);
+                    const folderName = withoutCurrentPrefix.split('/').filter(Boolean)[0];
+                    if (folderName && !seenFolders.has(folderName)) {
+                        seenFolders.add(folderName);
+                        const folderPath = `${bucketName}/${prefix}${folderName}/`;
+                        const resourceUri = vscode.Uri.parse(`minio://${this.uriAuthority}/${folderPath}`);
+                        children.push({
+                            resource: resourceUri,
+                            label: folderName,
+                            isDirectory: true,
+                            isBucket: false
+                        });
+                    }
+                    return; // handled
+                }
+
                 if (obj.name) {
-                    const objectName = obj.name;
-                    
-                    // Get the relative path from our current prefix
+                    const objectName: string = obj.name;
+                    // Relative path from current prefix
                     const relativePath = objectName.substring(prefix.length);
-                    
-                    if (relativePath) {
-                        const parts = relativePath.split('/');
-                        
-                        if (parts.length === 1 && parts[0]) {
-                            // This is a file in the current directory
-                            const fileName = parts[0];
-                            const resourceUri = vscode.Uri.parse(`minio://${this.host}/${bucketName}/${objectName}`);
-                            
+                    if (!relativePath) return;
+                    const parts = relativePath.split('/');
+                    if (parts.length === 1 && parts[0]) {
+                        // File
+                        const fileName = parts[0];
+                        const resourceUri = vscode.Uri.parse(`minio://${this.uriAuthority}/${bucketName}/${objectName}`);
+                        children.push({
+                            resource: resourceUri,
+                            label: fileName,
+                            isDirectory: false,
+                            isBucket: false
+                        });
+                    } else if (parts.length > 1 && parts[0]) {
+                        // Fallback: infer folder from deeper object name (useful if recursive=true in future)
+                        const folderName = parts[0];
+                        if (!seenFolders.has(folderName)) {
+                            seenFolders.add(folderName);
+                            const folderPath = `${bucketName}/${prefix}${folderName}/`;
+                            const resourceUri = vscode.Uri.parse(`minio://${this.uriAuthority}/${folderPath}`);
                             children.push({
                                 resource: resourceUri,
-                                label: fileName,
-                                isDirectory: false,
+                                label: folderName,
+                                isDirectory: true,
                                 isBucket: false
                             });
-                        } else if (parts.length > 1 && parts[0]) {
-                            // This represents a folder (has more path components)
-                            const folderName = parts[0];
-                            
-                            if (!seenFolders.has(folderName)) {
-                                seenFolders.add(folderName);
-                                const folderPath = `${bucketName}/${prefix}${folderName}/`;
-                                const resourceUri = vscode.Uri.parse(`minio://${this.host}/${folderPath}`);
-                                
-                                children.push({
-                                    resource: resourceUri,
-                                    label: folderName,
-                                    isDirectory: true,
-                                    isBucket: false
-                                });
-                            }
                         }
                     }
                 }

@@ -1,12 +1,15 @@
 import { Uri } from 'vscode';
 import { handleFileCopyied } from '../utils/handle-file-copyied';
 import { MinioConfigurationProvider } from '../services/minio-configuration-prodiver.service';
+import { extractBucketAndObject } from '../utils/path-utils';
 
 export const copyFileURL = async (resource: Uri) => {
     // Parse the resource path to get bucket and object info
-    const pathParts = resource.path.substring(1).split('/');
-    const bucketName = pathParts[0];
-    const objectName = pathParts.slice(1).join('/');
+    const { bucket: bucketName, object: objectName } = extractBucketAndObject(resource);
+    if (!bucketName) {
+        handleFileCopyied('');
+        return;
+    }
     
     const { minioClientOption } = MinioConfigurationProvider.minioConfiguration;
     const { port, endPoint } = minioClientOption;

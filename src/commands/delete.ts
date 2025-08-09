@@ -1,11 +1,14 @@
 import * as vscode from 'vscode';
 import { ImageDeleteService } from '../services/delete.service';
+import { extractBucketAndObject } from '../utils/path-utils';
 
 export const deleteLocalFile = async (resource: vscode.Uri) => {
     // Parse the resource path to get bucket and object info
-    const pathParts = resource.path.substring(1).split('/');
-    const bucketName = pathParts[0];
-    const objectName = pathParts.slice(1).join('/');
+    const { bucket: bucketName, object: objectName } = extractBucketAndObject(resource);
+    if (!bucketName || !objectName) {
+        vscode.window.showErrorMessage('Failed to parse bucket/object from resource for deletion.');
+        return;
+    }
     const fileName = objectName.split('/').pop() || 'Unknown file';
 
     // Confirm deletion

@@ -1,13 +1,16 @@
 import * as vscode from 'vscode';
 import { FileDownloadService } from '../services/download.service';
+import { extractBucketAndObject } from '../utils/path-utils';
 import path = require('path');
 import { handleFileDownloaded } from '../utils/handle-file-downloaded';
 
 export const downloadLocalFile = async (resource: vscode.Uri) => {
     // Parse the resource path to get bucket and object info
-    const pathParts = resource.path.substring(1).split('/');
-    const bucketName = pathParts[0];
-    const objectName = pathParts.slice(1).join('/');
+    const { bucket: bucketName, object: objectName } = extractBucketAndObject(resource);
+    if (!bucketName || !objectName) {
+        vscode.window.showErrorMessage('Failed to parse bucket/object from resource for download.');
+        return;
+    }
     const fileName = path.basename(objectName);
 
     // Ask user where to save the file
