@@ -1,9 +1,11 @@
 # Copilot Instructions for MINIO VS Code Extension
 
 Dearest Copilot,
-this project is a JS/TS VS Code extension that integrates [MinIO JavaScript 
+this project is a VS Code extension that integrates [MinIO JavaScript 
 Library for Amazon S3 Compatible Cloud Storage]|(https://github.com/minio/minio-js). 
-When generating code snippets or explanations, please follow these guidelines:
+When generating code snippets or explanations. It is written in JS/TS. 
+
+Please follow these guidelines:
 
 1. Output code in the chat always in Markdown.
 
