@@ -1,7 +1,7 @@
 import { ExtensionContext, workspace, commands, window, Uri } from 'vscode';
 import { MinioConfigurationProvider } from './services/minio-configuration-prodiver.service';
 import { AppContext } from './utils/app-context';
-import { MinIOModel, MinIOTreeDataProvider } from './minio';
+import { MinIOModel, MinIOTreeDataProvider, MinIONode } from './minio';
 import { uploadLocalFile } from './commands/upload';
 import { downloadLocalFile } from './commands/download';
 import { copyFileURL } from './commands/copy';
@@ -16,41 +16,51 @@ export function activate(context: ExtensionContext) {
     const serverAddress = config.get<string>('minio.server.address', '127.0.0.1');
     const accessKey = config.get<string>('minio.credential.accessKey', 'user');
     const secretKey = config.get<string>('minio.credential.secretKey', 'password');
-    /** Bucket to browse */
-    const bucketName = config.get<string>('minio.upload.bucketName', 'bucket');
-    /** Optional subdirectory inside the bucket to start browsing */
+    /** Optional subdirectory inside buckets to start browsing */
     const subDirectory = config.get<string>('minio.upload.directory', '');
 
-    // MinIO Explorer
-    const ftpModel = new MinIOModel(serverAddress, accessKey, secretKey, bucketName, subDirectory);
+    // MinIO Explorer - initialize without a specific bucket to show all buckets
+    const ftpModel = new MinIOModel(serverAddress, accessKey, secretKey, null, subDirectory);
     const ftpTreeDataProvider = new MinIOTreeDataProvider(ftpModel);
     window.registerTreeDataProvider('MinIOExplorer', ftpTreeDataProvider);
     commands.registerCommand('MinIOExplorer.refresh', () => ftpTreeDataProvider.refresh());
     commands.registerCommand('MinIOExplorer.openMinIOResource', resource => {
         window.showTextDocument(resource);
     });
-    commands.registerCommand(`${AppContext.extName}.upload`, async () => {
-        await uploadLocalFile();
+    commands.registerCommand(`${AppContext.extName}.upload`, async (node?: MinIONode) => {
+        await uploadLocalFile(node);
         commands.executeCommand('MinIOExplorer.refresh');
     });
-    commands.registerCommand(`${AppContext.extName}.download`, (resource: Uri) => {
-        console.log('Resource provided:', resource.fsPath);
+    // These commands can be invoked from a tree item context menu. VS Code passes the tree element (MinIONode),
+    // not the underlying Uri, so we normalize the argument here.
+    const normalizeToUri = (arg: any): Uri | undefined => {
+        if (!arg) return undefined;
+        if (arg instanceof Uri) return arg;
+        if (arg.resource instanceof Uri) return arg.resource as Uri;
+        return undefined;
+    };
+
+    commands.registerCommand(`${AppContext.extName}.download`, (arg: any) => {
+        const resource = normalizeToUri(arg);
+        console.log('Download command resource:', resource?.toString());
         if (!resource) {
             window.showErrorMessage('No resource provided for download.');
             return;
         }
         downloadLocalFile(resource);
     });
-    commands.registerCommand(`${AppContext.extName}.copy`, (resource: Uri) => {
-        console.log('Resource provided:', resource.fsPath);
+    commands.registerCommand(`${AppContext.extName}.copy`, (arg: any) => {
+        const resource = normalizeToUri(arg);
+        console.log('Copy command resource:', resource?.toString());
         if (!resource) {
             window.showErrorMessage('No resource provided for copy link.');
             return;
         }
         copyFileURL(resource);
     });
-    commands.registerCommand(`${AppContext.extName}.delete`, async (resource: Uri) => {
-        console.log('Resource provided:', resource.fsPath);
+    commands.registerCommand(`${AppContext.extName}.delete`, async (arg: any) => {
+        const resource = normalizeToUri(arg);
+        console.log('Delete command resource:', resource?.toString());
         if (!resource) {
             window.showErrorMessage('No resource provided for deletion.');
             return;

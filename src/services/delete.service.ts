@@ -22,4 +22,11 @@ export class ImageDeleteService {
 
         await client.removeObject(bucketName, fileURL);
     }
+
+    async deleteFromLocation(bucketName: string, objectName: string): Promise<void> {
+        const { minioClientOption } = MinioConfigurationProvider.minioConfiguration;
+        const client = new Minio.Client(minioClientOption);
+
+        await client.removeObject(bucketName, objectName);
+    }
 }

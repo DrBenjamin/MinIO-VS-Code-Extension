@@ -1,18 +1,26 @@
 import * as vscode from 'vscode';
 import { ImageDeleteService } from '../services/delete.service';
-import path = require('path');
+import { extractBucketAndObject } from '../utils/path-utils';
 
 export const deleteLocalFile = async (resource: vscode.Uri) => {
-    const resourcePath = JSON.parse(JSON.stringify(resource)).resource.path
-    const incorrectPrefix = path.dirname(resourcePath);
-    const folderCheck = incorrectPrefix.replace(/^\/\//, '');
-    const stringParts = folderCheck.split('/');
-    let folderName = stringParts.length > 1 ? stringParts[1] : '';
-    if (folderName !== '') {
-        folderName = `/${folderName}`;
+    // Parse the resource path to get bucket and object info
+    const { bucket: bucketName, object: objectName } = extractBucketAndObject(resource);
+    if (!bucketName || !objectName) {
+        vscode.window.showErrorMessage('Failed to parse bucket/object from resource for deletion.');
+        return;
     }
-    const fileName = resourcePath.slice(incorrectPrefix.length).replace('/', '');
-    const fileURL = `${folderName}/${fileName}`;
+    const fileName = objectName.split('/').pop() || 'Unknown file';
+
+    // Confirm deletion
+    const confirm = await vscode.window.showWarningMessage(
+        `Are you sure you want to delete "${fileName}"?`,
+        { modal: true },
+        'Delete'
+    );
+
+    if (confirm !== 'Delete') {
+        return;
+    }
 
     const fileLink = await vscode.window.withProgress(
         { title: 'Deleting file', location: vscode.ProgressLocation.Notification },
@@ -21,7 +29,7 @@ export const deleteLocalFile = async (resource: vscode.Uri) => {
             let fileLink = '';
             try {
                 const fileDeleteService = ImageDeleteService.instance;
-                await fileDeleteService.delete(fileURL);
+                await fileDeleteService.deleteFromLocation(bucketName, objectName);
                 fileLink = `${fileName} successfully deleted.`;
             } catch (err) {
                 vscode.window.showErrorMessage('Failed to delete file', {

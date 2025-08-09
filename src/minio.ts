@@ -6,34 +6,53 @@ export interface MinIONode {
     resource: vscode.Uri;
     label: string;
     isDirectory: boolean;
+    isBucket?: boolean;
 }
 
 export class MinIOModel {
     private minioClient: Minio.Client;
     private subDirectory: string;
+    private currentBucket: string | null = null;
+    private uriAuthority: string; // sanitized host authority used in minio:// URIs
 
     /**
      * @param host MinIO server URL
      * @param user Access key
      * @param password Secret key
-     * @param bucket Bucket name to browse
+     * @param bucket Bucket name to browse (optional - if null, shows all buckets)
      * @param subDirectory Optional subdirectory inside the bucket to start browsing
      */
     constructor(
         readonly host: string,
         private user: string,
         private password: string,
-        private bucket: string = 'bucket',
+        private bucket: string | null = null,
         subDirectory: string = ''
     ) {
         this.subDirectory = subDirectory;
-        const url = new URL(host);
-        const port = url.port ? parseInt(url.port, 10) : 9000;
-        const useSSL = url.protocol === 'https:';
+        this.currentBucket = bucket;
+        let endPoint = host;
+        let port = 9000;
+        let useSSL = false;
+        try {
+            const normalized = /^(https?:\/\/)/.test(host) ? host : `http://${host}`;
+            const url = new URL(normalized);
+            endPoint = url.hostname;
+            port = url.port ? parseInt(url.port, 10) : (url.protocol === 'https:' ? 443 : 80);
+            useSSL = url.protocol === 'https:';
+        } catch {
+            // treat host as raw endpoint (host[:port]) maybe
+            const hostParts = host.split(':');
+            if (hostParts.length === 2 && !isNaN(Number(hostParts[1]))) {
+                endPoint = hostParts[0];
+                port = Number(hostParts[1]);
+            }
+        }
+        this.uriAuthority = endPoint + (port && port !== 80 && port !== 443 ? `:${port}` : '');
         this.minioClient = new Minio.Client({
-            endPoint: url.hostname,
-            port: port,
-            useSSL: useSSL,
+            endPoint,
+            port,
+            useSSL,
             accessKey: user,
             secretKey: password,
         });
@@ -43,100 +62,144 @@ export class MinIOModel {
         return Promise.resolve(this.minioClient);
     }
 
-    public async getChildren(node?: MinIONode): Promise<MinIONode[]> {
+    public async getBuckets(): Promise<MinIONode[]> {
         const client = await this.connect();
+        try {
+            const buckets = await client.listBuckets();
+            return buckets.map(bucket => ({
+                resource: vscode.Uri.parse(`minio://${this.uriAuthority}/${bucket.name}/`),
+                label: bucket.name,
+                isDirectory: true,
+                isBucket: true
+            }));
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to list buckets: ${error}`);
+            return [];
+        }
+    }
 
-        // Step 1: Determine and normalize the prefix (start at subDirectory if root)
-        let prefix = node ? node.resource.path.substring(1) : this.subDirectory;
-        if (prefix && !prefix.endsWith('/')) {
-            prefix += '/';
+    public setCurrentBucket(bucketName: string) {
+        this.currentBucket = bucketName;
+    }
+
+    public getCurrentBucket(): string | null {
+        return this.currentBucket;
+    }
+
+    public async getChildren(node?: MinIONode): Promise<MinIONode[]> {
+        // If no specific bucket is set and no node is provided, show all buckets
+        if (!node && !this.currentBucket) {
+            return this.getBuckets();
         }
 
-        const recursive = true; // Set to true to retrieve all objects
-        const objectsStream = client.listObjectsV2(this.bucket, prefix, recursive);
+        const client = await this.connect();
+        
+        // Determine which bucket we're working with
+        let bucketName: string;
+        let prefix = '';
+
+        if (!node) {
+            // Root of a specific bucket
+            if (!this.currentBucket) {
+                return this.getBuckets();
+            }
+            bucketName = this.currentBucket;
+            prefix = this.subDirectory;
+            if (prefix && !prefix.endsWith('/')) {
+                prefix += '/';
+            }
+        } else if (node.isBucket) {
+            // Expanding a bucket - show its root contents
+            bucketName = node.label;
+            prefix = this.subDirectory;
+            if (prefix && !prefix.endsWith('/')) {
+                prefix += '/';
+            }
+        } else {
+            // Expanding a folder within a bucket
+            const pathParts = node.resource.path.substring(1).split('/');
+            bucketName = pathParts[0];
+            prefix = pathParts.slice(1).join('/');
+            if (prefix && !prefix.endsWith('/')) {
+                prefix += '/';
+            }
+        }
+
+        const recursive = false; // Only get immediate children
+        const objectsStream = client.listObjectsV2(bucketName, prefix, recursive);
 
         return new Promise((resolve, reject) => {
-            const foldersMap: Map<string, MinIONode> = new Map();
-            const filesMap: Map<string, MinIONode[]> = new Map();
+            const children: MinIONode[] = [];
+            const seenFolders = new Set<string>();
 
-            objectsStream.on('data', (obj) => {
-                console.log('Received object:', obj); // Debug log
+            objectsStream.on('data', (obj: any) => {
+                // Folders (common prefixes) are returned with a 'prefix' property when recursive=false
+                if (obj.prefix) {
+                    const folderFullPath: string = obj.prefix; // e.g. 'folder1/' or 'folder1/sub2/'
+                    // Derive folder name relative to current prefix
+                    const withoutCurrentPrefix = folderFullPath.substring(prefix.length);
+                    const folderName = withoutCurrentPrefix.split('/').filter(Boolean)[0];
+                    if (folderName && !seenFolders.has(folderName)) {
+                        seenFolders.add(folderName);
+                        const folderPath = `${bucketName}/${prefix}${folderName}/`;
+                        const resourceUri = vscode.Uri.parse(`minio://${this.uriAuthority}/${folderPath}`);
+                        children.push({
+                            resource: resourceUri,
+                            label: folderName,
+                            isDirectory: true,
+                            isBucket: false
+                        });
+                    }
+                    return; // handled
+                }
 
                 if (obj.name) {
-                    // This is a file or a folder without a trailing '/'
-                    const name = obj.name;
-
-                    // Calculate relative path
-                    const relativePath = name.substring(prefix.length);
-                    console.log(`Relative Path: ${relativePath}`); // Debug log
-
-                    // Split the relative path into parts
-                    const parts = relativePath.split('/').filter(p => p.length > 0);
-                    console.log(`Path Parts: ${parts}`); // Debug log
-
-                    if (parts.length === 1) {
-                        // This is a file in the current directory
+                    const objectName: string = obj.name;
+                    // Relative path from current prefix
+                    const relativePath = objectName.substring(prefix.length);
+                    if (!relativePath) return;
+                    const parts = relativePath.split('/');
+                    if (parts.length === 1 && parts[0]) {
+                        // File
                         const fileName = parts[0];
-                        const resourceUri = vscode.Uri.parse(`minio://${this.host}/${name}`);
-
-                        if (!filesMap.has('')) {
-                            filesMap.set('', []);
-                        }
-                        filesMap.get('')?.push({
+                        const resourceUri = vscode.Uri.parse(`minio://${this.uriAuthority}/${bucketName}/${objectName}`);
+                        children.push({
                             resource: resourceUri,
                             label: fileName,
-                            isDirectory: false
+                            isDirectory: false,
+                            isBucket: false
                         });
-                        console.log(`Added file: ${fileName}`); // Debug log
-                    } else if (parts.length > 1) {
-                        // This is a directory (immediate subfolder)
+                    } else if (parts.length > 1 && parts[0]) {
+                        // Fallback: infer folder from deeper object name (useful if recursive=true in future)
                         const folderName = parts[0];
-                        if (!foldersMap.has(folderName)) {
-                            const folderPath = `${prefix}${folderName}/`;
-                            const resourceUri = vscode.Uri.parse(`minio://${this.host}/${folderPath}`);
-                            foldersMap.set(folderName, {
+                        if (!seenFolders.has(folderName)) {
+                            seenFolders.add(folderName);
+                            const folderPath = `${bucketName}/${prefix}${folderName}/`;
+                            const resourceUri = vscode.Uri.parse(`minio://${this.uriAuthority}/${folderPath}`);
+                            children.push({
                                 resource: resourceUri,
                                 label: folderName,
                                 isDirectory: true,
+                                isBucket: false
                             });
-                            console.log(`Added folder: ${folderName}`); // Debug log
-                        }
-
-                        // Ensure files within this folder are also processed
-                        const subfolderPath = `${prefix}${folderName}/`;
-                        const subfolderRelativePath = name.substring(subfolderPath.length);
-                        const subfolderParts = subfolderRelativePath.split('/').filter(p => p.length > 0);
-
-                        if (subfolderParts.length === 1) {
-                            // This is a file within the subfolder
-                            const subfileName = subfolderParts[0];
-                            //const subfileResourceUri = vscode.Uri.parse(`minio://${this.host}/${name}`);
-                            const fullPath = `${folderName}/${subfileName}`;
-                            const subfileResourceUri = vscode.Uri.parse(`minio://${this.host}/${fullPath}`);
-                            if (!filesMap.has(folderName)) {
-                                filesMap.set(folderName, []);
-                            }
-                            filesMap.get(folderName)?.push({
-                                resource: subfileResourceUri,
-                                label: subfileName,
-                                isDirectory: false
-                            });
-                            console.log(`Added file in subfolder: ${subfileName}`); // Debug log
                         }
                     }
                 }
             });
 
             objectsStream.on('end', () => {
-                // Combine folders and files
-                const folders = Array.from(foldersMap.values());
-                const files = Array.from(filesMap.values()).flat();
-                //resolve([...folders, ...files]);
-                resolve([...files]);
+                // Sort: folders first, then files
+                children.sort((a, b) => {
+                    if (a.isDirectory && !b.isDirectory) return -1;
+                    if (!a.isDirectory && b.isDirectory) return 1;
+                    return a.label.localeCompare(b.label);
+                });
+                
+                resolve(children);
             });
 
             objectsStream.on('error', (err) => {
-                console.error('Error listing objects:', err); // Debug log
+                console.error('Error listing objects:', err);
                 vscode.window.showErrorMessage(`Failed to list objects: ${err.message}`);
                 reject(err);
             });
@@ -145,10 +208,12 @@ export class MinIOModel {
 
     public async getContent(resource: vscode.Uri): Promise<string> {
         const client = await this.connect();
-        const objectName = resource.path.substring(1);
+        const pathParts = resource.path.substring(1).split('/');
+        const bucketName = pathParts[0];
+        const objectName = pathParts.slice(1).join('/');
 
         return new Promise((resolve, reject) => {
-            client.getObject(this.bucket, objectName, (err, dataStream) => {
+            client.getObject(bucketName, objectName, (err, dataStream) => {
                 if (err) {
                     return reject(err);
                 }
@@ -183,11 +248,19 @@ export class MinIOTreeDataProvider implements vscode.TreeDataProvider<MinIONode>
     public getTreeItem(element: MinIONode): vscode.TreeItem {
         const treeItem = new vscode.TreeItem(element.label);
         treeItem.resourceUri = element.resource;
-        treeItem.collapsibleState = element.isDirectory
-            ? vscode.TreeItemCollapsibleState.Expanded
-            : vscode.TreeItemCollapsibleState.None;
-
-        if (!element.isDirectory) {
+        
+        if (element.isBucket) {
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+            treeItem.iconPath = new vscode.ThemeIcon('database');
+            treeItem.contextValue = 'bucket';
+        } else if (element.isDirectory) {
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+            treeItem.iconPath = vscode.ThemeIcon.Folder;
+            treeItem.contextValue = 'folder';
+        } else {
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
+            treeItem.iconPath = vscode.ThemeIcon.File;
+            treeItem.contextValue = 'file';
             treeItem.command = {
                 command: 'MinIOExplorer.openMinIOResource',
                 title: 'Open File',
