@@ -1,18 +1,23 @@
 import * as vscode from 'vscode';
 import { ImageDeleteService } from '../services/delete.service';
-import path = require('path');
 
 export const deleteLocalFile = async (resource: vscode.Uri) => {
-    const resourcePath = JSON.parse(JSON.stringify(resource)).resource.path
-    const incorrectPrefix = path.dirname(resourcePath);
-    const folderCheck = incorrectPrefix.replace(/^\/\//, '');
-    const stringParts = folderCheck.split('/');
-    let folderName = stringParts.length > 1 ? stringParts[1] : '';
-    if (folderName !== '') {
-        folderName = `/${folderName}`;
+    // Parse the resource path to get bucket and object info
+    const pathParts = resource.path.substring(1).split('/');
+    const bucketName = pathParts[0];
+    const objectName = pathParts.slice(1).join('/');
+    const fileName = objectName.split('/').pop() || 'Unknown file';
+
+    // Confirm deletion
+    const confirm = await vscode.window.showWarningMessage(
+        `Are you sure you want to delete "${fileName}"?`,
+        { modal: true },
+        'Delete'
+    );
+
+    if (confirm !== 'Delete') {
+        return;
     }
-    const fileName = resourcePath.slice(incorrectPrefix.length).replace('/', '');
-    const fileURL = `${folderName}/${fileName}`;
 
     const fileLink = await vscode.window.withProgress(
         { title: 'Deleting file', location: vscode.ProgressLocation.Notification },
@@ -21,7 +26,7 @@ export const deleteLocalFile = async (resource: vscode.Uri) => {
             let fileLink = '';
             try {
                 const fileDeleteService = ImageDeleteService.instance;
-                await fileDeleteService.delete(fileURL);
+                await fileDeleteService.deleteFromLocation(bucketName, objectName);
                 fileLink = `${fileName} successfully deleted.`;
             } catch (err) {
                 vscode.window.showErrorMessage('Failed to delete file', {

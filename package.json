@@ -61,18 +61,28 @@
 			],
 			"view/item/context": [
 				{
+					"command": "minio.upload",
+					"when": "view == MinIOExplorer && viewItem == bucket",
+					"group": "inline"
+				},
+				{
+					"command": "minio.upload",
+					"when": "view == MinIOExplorer && viewItem == folder",
+					"group": "inline"
+				},
+				{
 					"command": "minio.download",
-					"when": "view == MinIOExplorer",
+					"when": "view == MinIOExplorer && viewItem == file",
 					"group": "inline"
 				},
 				{
 					"command": "minio.delete",
-					"when": "view == MinIOExplorer",
+					"when": "view == MinIOExplorer && viewItem == file",
 					"group": "inline"
 				},
 				{
 					"command": "minio.copy",
-					"when": "view == MinIOExplorer",
+					"when": "view == MinIOExplorer && viewItem == file",
 					"group": "inline"
 				}
 			]

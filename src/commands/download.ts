@@ -4,16 +4,22 @@ import path = require('path');
 import { handleFileDownloaded } from '../utils/handle-file-downloaded';
 
 export const downloadLocalFile = async (resource: vscode.Uri) => {
-    const resourcePath = JSON.parse(JSON.stringify(resource)).resource.path
-    const incorrectPrefix = path.dirname(resourcePath);
-    const folderCheck = incorrectPrefix.replace(/^\/\//, '');
-    const stringParts = folderCheck.split('/');
-    let folderName = stringParts.length > 1 ? stringParts[1] : '';
-    if (folderName !== '') {
-        folderName = `/${folderName}`;
+    // Parse the resource path to get bucket and object info
+    const pathParts = resource.path.substring(1).split('/');
+    const bucketName = pathParts[0];
+    const objectName = pathParts.slice(1).join('/');
+    const fileName = path.basename(objectName);
+
+    // Ask user where to save the file
+    const saveUri = await vscode.window.showSaveDialog({
+        defaultUri: vscode.Uri.file(fileName),
+        title: 'Save file as',
+        saveLabel: 'Save'
+    });
+
+    if (!saveUri) {
+        return; // User cancelled
     }
-    const fileName = resourcePath.slice(incorrectPrefix.length).replace('/', '');
-    const fileURL = `${folderName}/${fileName}`;
 
     const fileLink = await vscode.window.withProgress(
         { title: 'Downloading file', location: vscode.ProgressLocation.Notification },
@@ -22,10 +28,8 @@ export const downloadLocalFile = async (resource: vscode.Uri) => {
             let fileLink = '';
             try {
                 const fileDownloadService = FileDownloadService.instance;
-                await fileDownloadService.download(fileURL, fileName);
-                const config = vscode.workspace.getConfiguration('minio');
-                const filePath= config.get<string>('minio.download.directory', '/Users/username/Downloads');
-                fileLink = `${filePath}/${fileName}`;
+                await fileDownloadService.downloadToPath(bucketName, objectName, saveUri.fsPath);
+                fileLink = saveUri.fsPath;
             } catch (err) {
                 vscode.window.showErrorMessage('Failed to download file', {
                     detail: err instanceof Error ? err.message : JSON.stringify(err),
