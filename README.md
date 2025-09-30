@@ -6,7 +6,7 @@ A MinIO plugin for quickly uploading, downloading or deleting images on a Minio 
 
 Before use, you must configure the address of the MinIO server and the access key in the plugin settings.
 
-![image](https://github.com/DrBenjamin/MinIO-VS-Code-Extension/blob/22318ac247625080dcf3900f85785840b0aa8d2a/resources/settings.png?raw=true)
+![image](https://github.com/DrBenjamin/MinIO-VS-Code-Extension/blob/5bee2ea9efc95c3547800dd30d33ec54b053cfa7/resources/settings.png?raw=true)
 
 Make sure that the configured bucket name exists in MinIO, otherwise the upload will fail.
 
@@ -16,19 +16,19 @@ All features are available in the MinIO Extension.
 
 ### MinIO Explorer
 
-Thee MinIO Explorer shows all files in the configured bucket. You can upload, download or delete files from the MinIO server.
+The MinIO Explorer shows all buckets, folders and files in the configured MinIO endpoint. You can upload, download or delete files from the MinIO server.
 
-![image](https://github.com/DrBenjamin/MinIO-VS-Code-Extension/blob/22318ac247625080dcf3900f85785840b0aa8d2a/resources/MinIO%20Explorer.png?raw=true)
+![image](https://github.com/DrBenjamin/MinIO-VS-Code-Extension/blob/5bee2ea9efc95c3547800dd30d33ec54b053cfa7/resources/MinIO%20Explorer.png?raw=true)
 
 ### File uploading
 
-Upload local files to MinIO by clicking the upload button or using the keyboard shortcut: `cmd/ctrl+shift+z`; `cmd/ctrl+shift+z`. After successfully uploading a file, a dialogue box appears showing the address of the file. You can use this dialogue box to quickly copy this address.
+Upload local files to MinIO by clicking the upload button on a selected bucket or subfolder or using the keyboard shortcut: `cmd/ctrl+shift+z`; `cmd/ctrl+shift+z`. After successfully uploading a file or multiple files at once, a dialogue box appears showing the address of the (first) file. You can use this dialogue box to quickly copy this address.
 
 ![image](https://github.com/DrBenjamin/MinIO-VS-Code-Extension/blob/22318ac247625080dcf3900f85785840b0aa8d2a/resources/Uploaded.png?raw=true)
 
 ### File downloading
 
-Download files from MinIO with clicking the download button on a specific file. After successfully downloading a file, a dialogue box appears showing the address of the local file. You can use this dialogue box to quickly copy this address.
+Download a file or multiple files at once from MinIO with clicking the download button on a specific file. After successfully downloading a file, a dialogue box appears showing the address of the local file. You can use this dialogue box to quickly copy this address.
 
 ![image](https://github.com/DrBenjamin/MinIO-VS-Code-Extension/blob/22318ac247625080dcf3900f85785840b0aa8d2a/resources/Downloaded.png?raw=true)
 
