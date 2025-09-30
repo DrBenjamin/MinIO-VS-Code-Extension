@@ -14,15 +14,6 @@ export class ImageDeleteService {
 
     private constructor() {}
 
-    async delete(fileURL: string): Promise<void> {
-        const { minioClientOption } = MinioConfigurationProvider.minioConfiguration;
-        const client = new Minio.Client(minioClientOption);
-        const config = vscode.workspace.getConfiguration('minio');
-        const bucketName = config.get<string>('minio.upload.bucketName', 'templategenerator');
-
-        await client.removeObject(bucketName, fileURL);
-    }
-
     async deleteFromLocation(bucketName: string, objectName: string): Promise<void> {
         const { minioClientOption } = MinioConfigurationProvider.minioConfiguration;
         const client = new Minio.Client(minioClientOption);

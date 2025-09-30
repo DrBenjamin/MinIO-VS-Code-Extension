@@ -11,7 +11,6 @@ export interface MinIONode {
 
 export class MinIOModel {
     private minioClient: Minio.Client;
-    private subDirectory: string;
     private currentBucket: string | null = null;
     private uriAuthority: string; // sanitized host authority used in minio:// URIs
 
@@ -20,16 +19,13 @@ export class MinIOModel {
      * @param user Access key
      * @param password Secret key
      * @param bucket Bucket name to browse (optional - if null, shows all buckets)
-     * @param subDirectory Optional subdirectory inside the bucket to start browsing
      */
     constructor(
         readonly host: string,
         private user: string,
         private password: string,
-        private bucket: string | null = null,
-        subDirectory: string = ''
+        private bucket: string | null = null
     ) {
-        this.subDirectory = subDirectory;
         this.currentBucket = bucket;
         let endPoint = host;
         let port = 9000;
@@ -104,17 +100,11 @@ export class MinIOModel {
                 return this.getBuckets();
             }
             bucketName = this.currentBucket;
-            prefix = this.subDirectory;
-            if (prefix && !prefix.endsWith('/')) {
-                prefix += '/';
-            }
+            prefix = '';
         } else if (node.isBucket) {
             // Expanding a bucket - show its root contents
             bucketName = node.label;
-            prefix = this.subDirectory;
-            if (prefix && !prefix.endsWith('/')) {
-                prefix += '/';
-            }
+            prefix = '';
         } else {
             // Expanding a folder within a bucket
             const pathParts = node.resource.path.substring(1).split('/');
@@ -301,9 +291,8 @@ export class MinIOExplorer {
         const serverAddress = config.get<string>('minio.server.address', 'http://127.0.0.1:9000');
         const accessKey = config.get<string>('minio.credential.accessKey', 'user');
         const secretKey = config.get<string>('minio.credential.secretKey', 'password');
-        const bucketName = config.get<string>('minio.upload.bucketName', 'bucket');
 
-        const minioModel = new MinIOModel(serverAddress, accessKey, secretKey, bucketName);
+        const minioModel = new MinIOModel(serverAddress, accessKey, secretKey, null);
         const treeDataProvider = new MinIOTreeDataProvider(minioModel);
 
         context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('minio', treeDataProvider));

@@ -16,33 +16,6 @@ export class FileDownloadService {
 
     private constructor() {}
 
-    async download(fileURL: string, fileName: string): Promise<void> {
-        const { minioClientOption } = MinioConfigurationProvider.minioConfiguration;
-        const client = new Minio.Client(minioClientOption);
-        const config = vscode.workspace.getConfiguration('minio');
-        const bucketName = config.get<string>('minio.upload.bucketName', 'bucketname');
-        const filePath= config.get<string>('minio.download.directory', '~/Downloads');
-        const localFilePath = path.join(filePath, fileName);
-        const fileStream = fs.createWriteStream(localFilePath);
-
-        let size = 0;
-        const dataStream = await client.getObject(bucketName, fileURL);
-        dataStream.on('data', function (chunk) {
-            size += chunk.length;
-            fileStream.write(chunk);
-            console.log('Received ' + size);
-        });
-        dataStream.on('end', function () {
-            fileStream.end();
-            console.log('End. Total size = ' + size);
-            console.log('File downloaded to ' + localFilePath);
-        });
-        dataStream.on('error', function (err) {
-            fileStream.end();
-            console.log(err);
-        });
-    }
-
     async downloadToPath(bucketName: string, objectName: string, localFilePath: string): Promise<void> {
         const { minioClientOption } = MinioConfigurationProvider.minioConfiguration;
         const client = new Minio.Client(minioClientOption);

@@ -16,13 +16,19 @@ export function activate(context: ExtensionContext) {
     const serverAddress = config.get<string>('minio.server.address', '127.0.0.1');
     const accessKey = config.get<string>('minio.credential.accessKey', 'user');
     const secretKey = config.get<string>('minio.credential.secretKey', 'password');
-    /** Optional subdirectory inside buckets to start browsing */
-    const subDirectory = config.get<string>('minio.upload.directory', '');
 
     // MinIO Explorer - initialize without a specific bucket to show all buckets
-    const ftpModel = new MinIOModel(serverAddress, accessKey, secretKey, null, subDirectory);
+    const ftpModel = new MinIOModel(serverAddress, accessKey, secretKey, null);
     const ftpTreeDataProvider = new MinIOTreeDataProvider(ftpModel);
-    window.registerTreeDataProvider('MinIOExplorer', ftpTreeDataProvider);
+    
+    // Create TreeView with multi-select enabled
+    const treeView = window.createTreeView('MinIOExplorer', {
+        treeDataProvider: ftpTreeDataProvider,
+        canSelectMany: true
+    });
+    
+    context.subscriptions.push(treeView);
+    
     commands.registerCommand('MinIOExplorer.refresh', () => ftpTreeDataProvider.refresh());
     commands.registerCommand('MinIOExplorer.openMinIOResource', resource => {
         window.showTextDocument(resource);
@@ -40,32 +46,80 @@ export function activate(context: ExtensionContext) {
         return undefined;
     };
 
-    commands.registerCommand(`${AppContext.extName}.download`, (arg: any) => {
-        const resource = normalizeToUri(arg);
-        console.log('Download command resource:', resource?.toString());
-        if (!resource) {
+    commands.registerCommand(`${AppContext.extName}.download`, (arg: any, selectedItems?: any[]) => {
+        // Handle multi-select: if selectedItems exists and has multiple items, use them
+        // Otherwise fall back to single selection
+        const resources: Uri[] = [];
+        
+        if (selectedItems && selectedItems.length > 0) {
+            // Multi-select case
+            for (const item of selectedItems) {
+                const uri = normalizeToUri(item);
+                if (uri) resources.push(uri);
+            }
+        } else {
+            // Single select case
+            const resource = normalizeToUri(arg);
+            if (resource) resources.push(resource);
+        }
+        
+        console.log('Download command resources:', resources.map(r => r.toString()));
+        if (resources.length === 0) {
             window.showErrorMessage('No resource provided for download.');
             return;
         }
-        downloadLocalFile(resource);
+        
+        downloadLocalFile(resources);
     });
-    commands.registerCommand(`${AppContext.extName}.copy`, (arg: any) => {
-        const resource = normalizeToUri(arg);
-        console.log('Copy command resource:', resource?.toString());
-        if (!resource) {
+    commands.registerCommand(`${AppContext.extName}.copy`, (arg: any, selectedItems?: any[]) => {
+        // Handle multi-select: if selectedItems exists and has multiple items, use them
+        // Otherwise fall back to single selection
+        const resources: Uri[] = [];
+        
+        if (selectedItems && selectedItems.length > 0) {
+            // Multi-select case
+            for (const item of selectedItems) {
+                const uri = normalizeToUri(item);
+                if (uri) resources.push(uri);
+            }
+        } else {
+            // Single select case
+            const resource = normalizeToUri(arg);
+            if (resource) resources.push(resource);
+        }
+        
+        console.log('Copy command resources:', resources.map(r => r.toString()));
+        if (resources.length === 0) {
             window.showErrorMessage('No resource provided for copy link.');
             return;
         }
-        copyFileURL(resource);
+        
+        copyFileURL(resources);
     });
-    commands.registerCommand(`${AppContext.extName}.delete`, async (arg: any) => {
-        const resource = normalizeToUri(arg);
-        console.log('Delete command resource:', resource?.toString());
-        if (!resource) {
+    commands.registerCommand(`${AppContext.extName}.delete`, async (arg: any, selectedItems?: any[]) => {
+        // Handle multi-select: if selectedItems exists and has multiple items, use them
+        // Otherwise fall back to single selection
+        const resources: Uri[] = [];
+        
+        if (selectedItems && selectedItems.length > 0) {
+            // Multi-select case
+            for (const item of selectedItems) {
+                const uri = normalizeToUri(item);
+                if (uri) resources.push(uri);
+            }
+        } else {
+            // Single select case
+            const resource = normalizeToUri(arg);
+            if (resource) resources.push(resource);
+        }
+        
+        console.log('Delete command resources:', resources.map(r => r.toString()));
+        if (resources.length === 0) {
             window.showErrorMessage('No resource provided for deletion.');
             return;
         }
-        await deleteLocalFile(resource);
+        
+        await deleteLocalFile(resources);
         commands.executeCommand('MinIOExplorer.refresh');
     });
 }

@@ -67,8 +67,18 @@
 				},
 				{
 					"command": "minio.upload",
+					"when": "view == MinIOExplorer && viewItem == bucket",
+					"group": "1_actions@1"
+				},
+				{
+					"command": "minio.upload",
 					"when": "view == MinIOExplorer && viewItem == folder",
 					"group": "inline"
+				},
+				{
+					"command": "minio.upload",
+					"when": "view == MinIOExplorer && viewItem == folder",
+					"group": "1_actions@1"
 				},
 				{
 					"command": "minio.download",
@@ -76,14 +86,29 @@
 					"group": "inline"
 				},
 				{
-					"command": "minio.delete",
+					"command": "minio.download",
+					"when": "view == MinIOExplorer && viewItem == file",
+					"group": "1_actions@1"
+				},
+				{
+					"command": "minio.copy",
 					"when": "view == MinIOExplorer && viewItem == file",
 					"group": "inline"
 				},
 				{
 					"command": "minio.copy",
 					"when": "view == MinIOExplorer && viewItem == file",
+					"group": "1_actions@2"
+				},
+				{
+					"command": "minio.delete",
+					"when": "view == MinIOExplorer && viewItem == file",
 					"group": "inline"
+				},
+				{
+					"command": "minio.delete",
+					"when": "view == MinIOExplorer && viewItem == file",
+					"group": "2_danger@1"
 				}
 			]
 		},
@@ -156,23 +181,11 @@
 						"markdownDescription": "Secret key is the password to your MinIO account.",
 						"order": 2
 					},
-					"minio.minio.upload.bucketName": {
-						"default": "bucketname",
-						"type": "string",
-						"markdownDescription": "A bucket where files will be uploaded to.",
-						"order": 3
-					},
-					"minio.minio.upload.directory": {
-						"default": "",
-						"type": "string",
-						"markdownDescription": "Subdirectory inside the bucket to start browsing (e.g., 'folder1/subfolder').",
-						"order": 4
-					},
 					"minio.minio.download.directory": {
 						"default": "/Users/username/Downloads/",
 						"type": "string",
-						"markdownDescription": "Directory to save downloaded files.\n\n  e.g. `/Users/username/Downloads/`",
-						"order": 5
+						"markdownDescription": "Default local folder for uploading and downloading files.\n\n  e.g. `/Users/username/Downloads/`",
+						"order": 3
 					}
 				}
 			}

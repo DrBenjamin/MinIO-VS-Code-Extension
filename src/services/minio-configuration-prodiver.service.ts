@@ -8,8 +8,6 @@ export class MinioConfigurationProvider {
         const serverAddress = configuration.get<string>('minio.server.address') ?? '';
         const accessKey = configuration.get<string>('minio.credential.accessKey') ?? '';
         const secretKey = configuration.get<string>('minio.credential.secretKey') ?? '';
-        const bucketName = configuration.get<string>('minio.upload.bucketName') ?? '';
-        const subdirectory = configuration.get<string>('minio.upload.directory') ?? '';
         let [scheme, host] = serverAddress.split(/:?\/\//);
         let port: number = 0;
         host = host.replace(/:(\d{2,})/, (_, sub1) => {
@@ -17,17 +15,13 @@ export class MinioConfigurationProvider {
             return '';
         });
 
-        return new MinioConfiguration(
-            {
-                accessKey,
-                secretKey,
-                endPoint: host,
-                useSSL: scheme === 'https',
-                port: port > 0 ? port : undefined,
-            },
-            bucketName,
-            subdirectory,
-        );
+        return new MinioConfiguration({
+            accessKey,
+            secretKey,
+            endPoint: host,
+            useSSL: scheme === 'https',
+            port: port > 0 ? port : undefined,
+        });
     }
 
     private static get configuration() {
@@ -39,8 +33,6 @@ export class MinioConfigurationProvider {
             ['minio.server.address', 'minioServerAddress'],
             ['minio.credential.accessKey', 'minioAccessKey'],
             ['minio.credential.secretKey', 'minioSecretKey'],
-            ['minio.upload.bucketName', 'minioBucketName'],
-            ['minio.upload.directory', 'subdirectoryInMinioBucket'],
         ] as const) {
             const oldValueSpec = this.configuration.inspect(oldKey);
             if (oldValueSpec == null) {

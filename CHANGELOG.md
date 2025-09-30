@@ -2,6 +2,9 @@
 
 All notable changes to the "MinIO VS Code" extension will be documented in this file.
 
+## [2.1.0]
+- Multi-File support
+
 ## [2.0.0]
 - Multi-bucket support
 

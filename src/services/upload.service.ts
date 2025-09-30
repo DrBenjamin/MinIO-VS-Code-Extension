@@ -17,28 +17,6 @@ export class FileUploadService {
     private constructor() {}
 
     /**
-     * Uploads a file stream to MinIO, placing it into the configured subdirectory if set.
-     */
-    async upload(fileStream: Readable, fileName: string): Promise<string> {
-        const client = MinioClientFactory.minioClient;
-        const { bucketName, minioClientOption, subDirectory } = MinioConfigurationProvider.minioConfiguration;
-        // Normalize subdirectory and build object name
-        const normalizedSubDir = subDirectory ? subDirectory.replace(/\/+$|\/+$/g, '') : '';
-        const objectName = normalizedSubDir ? `/${normalizedSubDir}/${fileName}` : `/${fileName}`;
-        const fileExt = path.extname(fileName);
-
-        await client.putObject(bucketName, objectName, fileStream, {
-            'Content-Type': mime.contentType(fileExt),
-        });
-        const { port, endPoint } = minioClientOption;
-        // Build URL using the same objectName
-        return `${minioClientOption.useSSL ? 'https' : 'http'}://${endPoint}${ port == null || port === 80 || port === 443 ? '' : ':' + port }/${bucketName}${objectName
-            .split('/')
-            .map(x => encodeURI(x))
-            .join('/')}`;
-    }
-
-    /**
      * Uploads a file stream to a specific bucket and path location.
      */
     async uploadToLocation(fileStream: Readable, fileName: string, bucketName: string, targetPath: string): Promise<string> {
