@@ -2,7 +2,7 @@
 
 All notable changes to the "MinIO VS Code" extension will be documented in this file.
 
-## [2.1.1]
+## [2.2.0]
 - Fixed MinIO Explorer bucket loading failures that appeared as `Failed to list buckets: AggregateError`
 - Normalized MinIO server address parsing (including malformed values like `http:/host`) to prevent invalid endpoint resolution
 - Corrected the default server address to `http://127.0.0.1:9000`
