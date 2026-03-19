@@ -1,6 +1,38 @@
 import * as vscode from 'vscode';
 import * as Minio from 'minio';
 import { basename, posix } from 'path';
+import { parseMinioServerAddress } from './utils/minio-server-address';
+
+type AggregateErrorLike = Error & { errors: unknown[] };
+
+function isAggregateErrorLike(error: unknown): error is AggregateErrorLike {
+    return error instanceof Error && Array.isArray((error as { errors?: unknown[] }).errors);
+}
+
+function getErrorMessage(error: unknown): string {
+    if (isAggregateErrorLike(error)) {
+        const nestedMessages = error.errors
+            .map((err: unknown) => getErrorMessage(err))
+            .filter((message: string) => message.length > 0);
+        if (nestedMessages.length > 0) {
+            return nestedMessages.join('; ');
+        }
+    }
+
+    if (error instanceof Error) {
+        return error.message || error.name;
+    }
+
+    if (typeof error === 'string') {
+        return error;
+    }
+
+    try {
+        return JSON.stringify(error);
+    } catch {
+        return String(error);
+    }
+}
 
 export interface MinIONode {
     resource: vscode.Uri;
@@ -27,23 +59,10 @@ export class MinIOModel {
         private bucket: string | null = null
     ) {
         this.currentBucket = bucket;
-        let endPoint = host;
-        let port = 9000;
-        let useSSL = false;
-        try {
-            const normalized = /^(https?:\/\/)/.test(host) ? host : `http://${host}`;
-            const url = new URL(normalized);
-            endPoint = url.hostname;
-            port = url.port ? parseInt(url.port, 10) : (url.protocol === 'https:' ? 443 : 80);
-            useSSL = url.protocol === 'https:';
-        } catch {
-            // treat host as raw endpoint (host[:port]) maybe
-            const hostParts = host.split(':');
-            if (hostParts.length === 2 && !isNaN(Number(hostParts[1]))) {
-                endPoint = hostParts[0];
-                port = Number(hostParts[1]);
-            }
-        }
+        const parsedServerAddress = parseMinioServerAddress(host);
+        const endPoint = parsedServerAddress.endPoint || host;
+        const port = parsedServerAddress.port ?? 9000;
+        const useSSL = parsedServerAddress.useSSL;
         this.uriAuthority = endPoint + (port && port !== 80 && port !== 443 ? `:${port}` : '');
         this.minioClient = new Minio.Client({
             endPoint,
@@ -69,7 +88,7 @@ export class MinIOModel {
                 isBucket: true
             }));
         } catch (error) {
-            vscode.window.showErrorMessage(`Failed to list buckets: ${error}`);
+            vscode.window.showErrorMessage(`Failed to list buckets: ${getErrorMessage(error)}`);
             return [];
         }
     }
@@ -190,7 +209,7 @@ export class MinIOModel {
 
             objectsStream.on('error', (err) => {
                 console.error('Error listing objects:', err);
-                vscode.window.showErrorMessage(`Failed to list objects: ${err.message}`);
+                vscode.window.showErrorMessage(`Failed to list objects: ${getErrorMessage(err)}`);
                 reject(err);
             });
         });

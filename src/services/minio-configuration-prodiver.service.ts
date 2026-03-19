@@ -1,6 +1,7 @@
 import { ConfigurationTarget, workspace } from 'vscode';
 import { MinioConfiguration } from '../models/minio-configuration';
 import { AppContext } from '../utils/app-context';
+import { parseMinioServerAddress } from '../utils/minio-server-address';
 
 export class MinioConfigurationProvider {
     static get minioConfiguration(): MinioConfiguration {
@@ -8,19 +9,14 @@ export class MinioConfigurationProvider {
         const serverAddress = configuration.get<string>('minio.server.address') ?? '';
         const accessKey = configuration.get<string>('minio.credential.accessKey') ?? '';
         const secretKey = configuration.get<string>('minio.credential.secretKey') ?? '';
-        let [scheme, host] = serverAddress.split(/:?\/\//);
-        let port: number = 0;
-        host = host.replace(/:(\d{2,})/, (_, sub1) => {
-            port = parseInt(sub1, 10);
-            return '';
-        });
+        const parsedServerAddress = parseMinioServerAddress(serverAddress);
 
         return new MinioConfiguration({
             accessKey,
             secretKey,
-            endPoint: host,
-            useSSL: scheme === 'https',
-            port: port > 0 ? port : undefined,
+            endPoint: parsedServerAddress.endPoint,
+            useSSL: parsedServerAddress.useSSL,
+            port: parsedServerAddress.port,
         });
     }
 

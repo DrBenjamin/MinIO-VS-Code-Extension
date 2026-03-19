@@ -163,7 +163,7 @@
 				"title": "MinIO",
 				"properties": {
 					"minio.minio.server.address": {
-						"default": "http:/127.0.0.1:9000",
+						"default": "http://127.0.0.1:9000",
 						"type": "string",
 						"markdownDescription": "e.g. `https://s3.amazonaws.com` `http://my-minio.xyz:5900`",
 						"pattern": "(^https?://)|(^$)",

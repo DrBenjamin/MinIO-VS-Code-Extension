@@ -13,7 +13,7 @@ export function activate(context: ExtensionContext) {
 
     // Read configuration
     const config = workspace.getConfiguration('minio');
-    const serverAddress = config.get<string>('minio.server.address', '127.0.0.1');
+    const serverAddress = config.get<string>('minio.server.address', 'http://127.0.0.1:9000');
     const accessKey = config.get<string>('minio.credential.accessKey', 'user');
     const secretKey = config.get<string>('minio.credential.secretKey', 'password');
 
