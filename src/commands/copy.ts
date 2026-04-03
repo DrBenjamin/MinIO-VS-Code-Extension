@@ -39,12 +39,5 @@ export const copyFileURL = async (resources: Uri | Uri[]) => {
     
     // Join multiple links with newlines
     const linksToCopy = fileLinks.join('\n');
-    handleFileCopyied(linksToCopy);
-    
-    // Show message
-    if (fileLinks.length === 1) {
-        window.showInformationMessage('File link copied to clipboard');
-    } else {
-        window.showInformationMessage(`${fileLinks.length} file links copied to clipboard`);
-    }
+    await handleFileCopyied(linksToCopy);
 };

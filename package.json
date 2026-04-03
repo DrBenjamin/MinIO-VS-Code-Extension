@@ -18,12 +18,6 @@
 	"categories": [
 		"Data Science"
 	],
-	"activationEvents": [
-		"onCommand:minio.upload",
-		"onCommand:minio.download",
-		"onCommand:minio.delete",
-		"onCommand:minio.copy"
-	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"viewsContainers": {
@@ -54,26 +48,36 @@
 					"group": "navigation"
 				},
 				{
-					"command": "minio.upload",
+					"command": "minio.createBucket",
 					"when": "view == MinIOExplorer",
-					"group": "navigation"
+					"group": "navigation@1"
 				}
 			],
 			"view/item/context": [
 				{
+					"command": "minio.createFolder",
+					"when": "view == MinIOExplorer && viewItem == bucket",
+					"group": "inline"
+				},
+				{
+					"command": "minio.createFolder",
+					"when": "view == MinIOExplorer && viewItem == bucket",
+					"group": "1_actions@2"
+				},
+				{
 					"command": "minio.upload",
 					"when": "view == MinIOExplorer && viewItem == bucket",
+					"group": "inline"
+				},
+				{
+					"command": "minio.upload",
+					"when": "view == MinIOExplorer && viewItem == folder",
 					"group": "inline"
 				},
 				{
 					"command": "minio.upload",
 					"when": "view == MinIOExplorer && viewItem == bucket",
 					"group": "1_actions@1"
-				},
-				{
-					"command": "minio.upload",
-					"when": "view == MinIOExplorer && viewItem == folder",
-					"group": "inline"
 				},
 				{
 					"command": "minio.upload",
@@ -122,12 +126,30 @@
 				}
 			},
 			{
+				"command": "minio.createBucket",
+				"title": "Create Bucket",
+				"category": "minio",
+				"icon": {
+					"light": "resources/light/create-bucket.svg",
+					"dark": "resources/dark/create-bucket.svg"
+				}
+			},
+			{
 				"command": "minio.upload",
 				"title": "Upload file from local disk to MinIO",
 				"category": "minio",
 				"icon": {
 					"light": "resources/light/upload.svg",
 					"dark": "resources/dark/upload.svg"
+				}
+			},
+			{
+				"command": "minio.createFolder",
+				"title": "Create folder in bucket",
+				"category": "minio",
+				"icon": {
+					"light": "resources/light/folder.svg",
+					"dark": "resources/dark/folder.svg"
 				}
 			},
 			{
@@ -186,6 +208,12 @@
 						"type": "string",
 						"markdownDescription": "Default local folder for uploading and downloading files.\n\n  e.g. `/Users/username/Downloads/`",
 						"order": 3
+					},
+					"minio.minio.notifications.showSuccessPopups": {
+						"default": true,
+						"type": "boolean",
+						"markdownDescription": "Show success popup messages for upload, download and copy actions. When disabled, values are still copied directly to the clipboard.",
+						"order": 4
 					}
 				}
 			}

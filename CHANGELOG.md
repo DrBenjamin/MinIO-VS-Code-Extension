@@ -2,6 +2,12 @@
 
 All notable changes to the "MinIO VS Code" extension will be documented in this file.
 
+## [2.3.0]
+
+- Added support for bucket creation
+- Added support for folder creation
+- Option to disable popup notifications for file uploads, downloads and copying to the clipboard
+
 ## [2.2.0]
 - Fixed MinIO Explorer bucket loading failures that appeared as `Failed to list buckets: AggregateError`
 - Normalized MinIO server address parsing (including malformed values like `http:/host`) to prevent invalid endpoint resolution

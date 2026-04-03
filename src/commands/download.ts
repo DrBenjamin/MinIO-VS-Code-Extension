@@ -74,7 +74,7 @@ export const downloadLocalFile = async (resources: vscode.Uri | vscode.Uri[]) =>
                 p.report({ increment: 100 });
             }
         );
-        handleFileDownloaded(fileName);
+        await handleFileDownloaded(saveUri.fsPath);
     } else {
         // Multiple files - use open folder dialog
         const folderUri = await vscode.window.showOpenDialog({

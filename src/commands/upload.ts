@@ -4,6 +4,7 @@ import { fileUploadService } from '../services/upload.service';
 import path = require('path');
 import { handleFileUploaded } from '../utils/handle-file-uploaded';
 import { MinIONode } from '../minio';
+import { extractBucketAndObject } from '../utils/path-utils';
 
 export const uploadLocalFile = async (targetNode?: MinIONode) => {
     // Get the configured download directory to use as default upload location
@@ -26,19 +27,20 @@ export const uploadLocalFile = async (targetNode?: MinIONode) => {
 
     if (targetNode) {
         if (targetNode.isBucket) {
-            // Uploading to root of bucket
+            // Bucket uploads are always forced to bucket root.
             targetBucket = targetNode.label;
             targetPath = '';
         } else if (targetNode.isDirectory) {
             // Uploading to a folder
-            const pathParts = targetNode.resource.path.substring(1).split('/');
-            targetBucket = pathParts[0];
-            targetPath = pathParts.slice(1).join('/');
+            const { bucket, object } = extractBucketAndObject(targetNode.resource);
+            targetBucket = bucket;
+            targetPath = object.replace(/\/+$/, '');
         } else {
             // File selected - upload to its parent directory
-            const pathParts = targetNode.resource.path.substring(1).split('/');
-            targetBucket = pathParts[0];
-            targetPath = pathParts.slice(1, -1).join('/');
+            const { bucket, object } = extractBucketAndObject(targetNode.resource);
+            targetBucket = bucket;
+            const parentDir = object.split('/').slice(0, -1).join('/');
+            targetPath = parentDir.replace(/\/+$/, '');
         }
     } else {
         // No target selected - ask user to select bucket and path

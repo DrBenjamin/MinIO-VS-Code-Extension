@@ -6,6 +6,8 @@ import { uploadLocalFile } from './commands/upload';
 import { downloadLocalFile } from './commands/download';
 import { copyFileURL } from './commands/copy';
 import { deleteLocalFile } from './commands/delete';
+import { createBucket } from './commands/create-bucket';
+import { createFolder } from './commands/create-folder';
 
 export function activate(context: ExtensionContext) {
     AppContext.init(context);
@@ -36,6 +38,18 @@ export function activate(context: ExtensionContext) {
     commands.registerCommand(`${AppContext.extName}.upload`, async (node?: MinIONode) => {
         await uploadLocalFile(node);
         commands.executeCommand('MinIOExplorer.refresh');
+    });
+    commands.registerCommand(`${AppContext.extName}.createBucket`, async () => {
+        const created = await createBucket();
+        if (created) {
+            commands.executeCommand('MinIOExplorer.refresh');
+        }
+    });
+    commands.registerCommand(`${AppContext.extName}.createFolder`, async (node?: MinIONode) => {
+        const created = await createFolder(node);
+        if (created) {
+            commands.executeCommand('MinIOExplorer.refresh');
+        }
     });
     // These commands can be invoked from a tree item context menu. VS Code passes the tree element (MinIONode),
     // not the underlying Uri, so we normalize the argument here.

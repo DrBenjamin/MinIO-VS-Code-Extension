@@ -1,6 +1,14 @@
-import { env, MessageOptions, SnippetString, window } from 'vscode';
+import { env, MessageOptions, window, workspace } from 'vscode';
 
 export const handleFileUploaded = async (fileLink: string) => {
+    const notificationsConfig = workspace.getConfiguration('minio.minio.notifications');
+    const showSuccessPopups = notificationsConfig.get<boolean>('showSuccessPopups', true);
+
+    if (!showSuccessPopups) {
+        await env.clipboard.writeText(fileLink);
+        return;
+    }
+
     const copyOptions = ['Copy File Link'];
     const selected = await window.showInformationMessage(
         'File uploaded successfully',
