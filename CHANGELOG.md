@@ -2,6 +2,10 @@
 
 All notable changes to the "MinIO VS Code" extension will be documented in this file.
 
+## [2.3.1]
+
+- Removed default download directory option to avoid confusion
+
 ## [2.3.0]
 
 - Added support for bucket creation

@@ -34,22 +34,12 @@ export const downloadLocalFile = async (resources: vscode.Uri | vscode.Uri[]) =>
         return;
     }
     
-    // Get the configured download directory
-    const config = vscode.workspace.getConfiguration('minio.minio.download');
-    const downloadDirectory = config.get<string>('directory') || '';
-    
     // Single file download - use save dialog
     if (fileResources.length === 1) {
         const { bucket: bucketName, object: objectName, fileName } = fileResources[0];
-        
-        // Build the default save path
-        const defaultPath = downloadDirectory 
-            ? path.join(downloadDirectory, fileName)
-            : fileName;
 
         // Ask user where to save the file
         const saveUri = await vscode.window.showSaveDialog({
-            defaultUri: vscode.Uri.file(defaultPath),
             title: 'Save file as',
             saveLabel: 'Save'
         });
@@ -82,8 +72,7 @@ export const downloadLocalFile = async (resources: vscode.Uri | vscode.Uri[]) =>
             canSelectFolders: true,
             canSelectMany: false,
             openLabel: 'Select Download Folder',
-            title: `Select folder to download ${fileResources.length} files`,
-            defaultUri: downloadDirectory ? vscode.Uri.file(downloadDirectory) : undefined
+            title: `Select folder to download ${fileResources.length} files`
         });
         
         if (!folderUri || folderUri.length === 0) {

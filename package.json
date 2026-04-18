@@ -2,7 +2,7 @@
 	"name": "minio",
 	"displayName": "MinIO",
 	"description": "A VS Code extension aimed at making managing files in a MinIO data lake an easy thing.",
-	"version": "2.3.0",
+	"version": "2.3.1",
 	"publisher": "seriousbenentertainment",
 	"preview": false,
 	"icon": "resources/dep.png",
@@ -203,17 +203,11 @@
 						"markdownDescription": "Secret key is the password to your MinIO account.",
 						"order": 2
 					},
-					"minio.minio.download.directory": {
-						"default": "/Users/username/Downloads/",
-						"type": "string",
-						"markdownDescription": "Default local folder for uploading and downloading files.\n\n  e.g. `/Users/username/Downloads/`",
-						"order": 3
-					},
 					"minio.minio.notifications.showSuccessPopups": {
 						"default": true,
 						"type": "boolean",
 						"markdownDescription": "Show success popup messages for upload, download and copy actions. When disabled, values are still copied directly to the clipboard.",
-						"order": 4
+						"order": 3
 					}
 				}
 			}

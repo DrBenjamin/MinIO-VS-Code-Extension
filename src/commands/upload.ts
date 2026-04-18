@@ -1,4 +1,4 @@
-import { MessageOptions, ProgressLocation, window, Uri, workspace } from 'vscode';
+import { MessageOptions, ProgressLocation, window } from 'vscode';
 import * as fs from 'fs';
 import { fileUploadService } from '../services/upload.service';
 import path = require('path');
@@ -7,15 +7,10 @@ import { MinIONode } from '../minio';
 import { extractBucketAndObject } from '../utils/path-utils';
 
 export const uploadLocalFile = async (targetNode?: MinIONode) => {
-    // Get the configured download directory to use as default upload location
-    const config = workspace.getConfiguration('minio.minio.download');
-    const downloadDirectory = config.get<string>('directory') || '';
-    
     // Step 1: Select file(s) to upload
     const fileUris = (await window.showOpenDialog({
         title: 'Select file(s) to upload',
-        canSelectMany: true,
-        defaultUri: downloadDirectory ? Uri.file(downloadDirectory) : undefined
+        canSelectMany: true
     })) ?? [];
     if (fileUris.length === 0) {
         return;
