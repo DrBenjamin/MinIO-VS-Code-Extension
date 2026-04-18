@@ -2,7 +2,7 @@
 	"name": "minio",
 	"displayName": "MinIO",
 	"description": "A VS Code extension aimed at making managing files in a MinIO data lake an easy thing.",
-	"version": "2.3.1",
+	"version": "3.2.1",
 	"publisher": "seriousbenentertainment",
 	"preview": false,
 	"icon": "resources/dep.png",
