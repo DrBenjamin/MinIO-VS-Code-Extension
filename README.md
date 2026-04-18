@@ -6,7 +6,7 @@ A MinIO plugin for quickly uploading, downloading or deleting files to a Minio s
 
 Before use, you must configure the address of the MinIO server and the access and secret key in the plugin settings.
 
-![image](https://github.com/DrBenjamin/MinIO-VS-Code-Extension/blob/5bee2ea9efc95c3547800dd30d33ec54b053cfa7/resources/settings.png?raw=true)
+![image](https://github.com/DrBenjamin/MinIO-VS-Code-Extension/blob/efa41e693871ca1fee0f67205cbec8556e543a5a/resources/settings.png?raw=true)
 
 ## Main Features
 
@@ -16,7 +16,7 @@ All available features of the MinIO Extension.
 
 The MinIO Explorer will show all buckets, folders and files from the configured MinIO endpoint. You can upload, download and delete files from the MinIO server.
 
-![image](https://github.com/DrBenjamin/MinIO-VS-Code-Extension/blob/5bee2ea9efc95c3547800dd30d33ec54b053cfa7/resources/MinIO%20Explorer.png?raw=true)
+![image](https://github.com/DrBenjamin/MinIO-VS-Code-Extension/blob/efa41e693871ca1fee0f67205cbec8556e543a5a/resources/MinIO%20Explorer.png?raw=true)
 
 ### File uploading
 
