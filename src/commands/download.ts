@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { FileDownloadService } from '../services/download.service';
 import { extractBucketAndObject } from '../utils/path-utils';
 import path = require('path');
+import os = require('os');
 import { handleFileDownloaded } from '../utils/handle-file-downloaded';
 
 export const downloadLocalFile = async (resources: vscode.Uri | vscode.Uri[]) => {
@@ -41,6 +42,7 @@ export const downloadLocalFile = async (resources: vscode.Uri | vscode.Uri[]) =>
         // Ask user where to save the file
         const saveUri = await vscode.window.showSaveDialog({
             title: 'Save file as',
+            defaultUri: vscode.Uri.file(path.join(os.homedir(), fileName)),
             saveLabel: 'Save'
         });
 
