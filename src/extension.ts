@@ -8,6 +8,7 @@ import { copyFileURL } from './commands/copy';
 import { deleteLocalFile } from './commands/delete';
 import { createBucket } from './commands/create-bucket';
 import { createFolder } from './commands/create-folder';
+import { exportBucketList } from './commands/export-bucket-list';
 
 export function activate(context: ExtensionContext) {
     AppContext.init(context);
@@ -44,6 +45,9 @@ export function activate(context: ExtensionContext) {
         if (created) {
             commands.executeCommand('MinIOExplorer.refresh');
         }
+    });
+    commands.registerCommand(`${AppContext.extName}.exportBucketList`, async () => {
+        await exportBucketList();
     });
     commands.registerCommand(`${AppContext.extName}.createFolder`, async (node?: MinIONode) => {
         const created = await createFolder(node);

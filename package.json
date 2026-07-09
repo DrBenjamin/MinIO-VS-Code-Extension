@@ -2,7 +2,7 @@
 	"name": "minio",
 	"displayName": "MinIO",
 	"description": "A VS Code extension aimed at making managing files in a MinIO data lake an easy thing.",
-	"version": "3.2.2",
+	"version": "3.3.3",
 	"publisher": "seriousbenentertainment",
 	"preview": false,
 	"icon": "resources/dep.png",
@@ -51,6 +51,11 @@
 					"command": "minio.createBucket",
 					"when": "view == MinIOExplorer",
 					"group": "navigation@1"
+				},
+				{
+					"command": "minio.exportBucketList",
+					"when": "view == MinIOExplorer",
+					"group": "navigation@2"
 				}
 			],
 			"view/item/context": [
@@ -133,6 +138,11 @@
 					"light": "resources/light/create-bucket.svg",
 					"dark": "resources/dark/create-bucket.svg"
 				}
+			},
+			{
+				"command": "minio.exportBucketList",
+				"title": "Export bucket list",
+				"category": "minio"
 			},
 			{
 				"command": "minio.upload",
@@ -221,7 +231,7 @@
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "npm run compile",
+		"vscode:prepublish": "npm install --no-audit --no-fund && npm run compile",
 		"compile": "tsc -p ./",
 		"watch": "tsc -watch -p ./",
 		"package": "webpack --mode production --devtool hidden-source-map",

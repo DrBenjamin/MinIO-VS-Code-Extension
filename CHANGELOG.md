@@ -2,6 +2,10 @@
 
 All notable changes to the "MinIO VS Code" extension will be documented in this file.
 
+## [2.3.3]
+
+- Added bucket export feature to export all bucket names to a csv file
+
 ## [2.3.2]
 
 - Fixed an issue where download file names were not properly resolved
