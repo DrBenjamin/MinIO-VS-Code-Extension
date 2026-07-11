@@ -52,11 +52,6 @@
 					"when": "view == MinIOExplorer",
 					"group": "navigation@1"
 				},
-                                {
-                    "command": "minio.deleteBucket",
-                    "when": "view == MinIOExplorer",
-                    "group": "navigation@2"
-                },
 				{
 					"command": "minio.exportBucketList",
 					"when": "view == MinIOExplorer",
@@ -93,6 +88,16 @@
 					"command": "minio.upload",
 					"when": "view == MinIOExplorer && viewItem == folder",
 					"group": "1_actions@1"
+				},
+				{
+					"command": "minio.deleteBucket",
+					"when": "view == MinIOExplorer && viewItem == bucket",
+					"group": "inline"
+				},
+				{
+					"command": "minio.deleteBucket",
+					"when": "view == MinIOExplorer && viewItem == bucket",
+					"group": "2_danger@1"
 				},
                 {
                     "command": "minio.deleteFolder",

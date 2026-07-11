@@ -30,19 +30,30 @@ export class ImageDeleteService {
         const client = new Minio.Client(minioClientOption);
 
         // List all objects in the bucket to clear it first
+        const deletions: Promise<void>[] = [];
         const objectsStream = client.listObjectsV2(bucketName, '', true);
-        await new Promise((resolve, reject) => {
-            objectsStream.on('data', async (obj: any) => {
+
+        await new Promise<void>((resolve, reject) => {
+            objectsStream.on('data', (obj: any) => {
                 if (obj.objectName) {
-                    try {
-                        await client.removeObject(bucketName, obj.objectName);
-                    } catch (e) {
-                        // Ignore errors on individual objects to ensure we try to delete as much as possible
-                    }
+                    deletions.push(
+                        client.removeObject(bucketName, obj.objectName).catch(() => {
+                            // Ignore errors on individual objects to ensure we try to delete as much as possible
+                        })
+                    );
                 }
             });
+
             objectsStream.on('error', reject);
-            objectsStream.on('end', resolve);
+
+            objectsStream.on('end', async () => {
+                try {
+                    await Promise.all(deletions);
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
         });
 
         await client.removeBucket(bucketName);
@@ -57,25 +68,41 @@ export class ImageDeleteService {
         const { minioClientOption } = MinioConfigurationProvider.minioConfiguration;
         const client = new Minio.Client(minioClientOption);
 
-        // Ensure the prefix ends with / for clean matching unless it's empty
         let folderPrefix = prefix;
         if (folderPrefix && !folderPrefix.endsWith('/')) {
             folderPrefix += '/';
         }
 
         const objectsStream = client.listObjectsV2(bucketName, folderPrefix, true);
-        await new Promise((resolve, reject) => {
-            objectsStream.on('data', async (obj: any) => {
-                if (obj.objectName) {
-                    try {
-                        await client.removeObject(bucketName, obj.objectName);
-                    } catch (e) {
-                        // Ignore errors on individual objects to ensure we try to delete as much as possible
-                    }
+
+        await new Promise<void>((resolve, reject) => {
+            let hasContent = false;
+
+            objectsStream.on('data', (obj: any) => {
+                if (obj.objectName && obj.objectName !== folderPrefix) {
+                    hasContent = true;
                 }
             });
+
             objectsStream.on('error', reject);
-            objectsStream.on('end', resolve);
+
+            objectsStream.on('end', () => {
+                if (hasContent) {
+                    reject(new Error(`Folder '${prefix}' is not empty.`));
+                    return;
+                }
+
+                resolve();
+            });
         });
+
+        // Delete a potential folder-marker object (e.g. "folder/")
+        if (folderPrefix) {
+            try {
+                await client.removeObject(bucketName, folderPrefix);
+            } catch {
+                // Ignore if no folder-marker object exists
+            }
+        }
     }
 }

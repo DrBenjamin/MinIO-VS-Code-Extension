@@ -57,8 +57,8 @@ export function activate(context: ExtensionContext) {
             commands.executeCommand('MinIOExplorer.refresh');
         }
     });
-    commands.registerCommand(`${AppContext.extName}.deleteBucket`, async () => {
-        const deleted = await deleteBucket();
+    commands.registerCommand(`${AppContext.extName}.deleteBucket`, async (node?: MinIONode) => {
+        const deleted = await deleteBucket(node);
         if (deleted) {
             commands.executeCommand('MinIOExplorer.refresh');
         }

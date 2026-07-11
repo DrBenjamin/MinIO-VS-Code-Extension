@@ -3,14 +3,20 @@ import { ImageDeleteService } from '../services/delete.service';
 
 /**
  * Deletes a bucket, ensuring it is empty first.
- * @param bucketName The name of the bucket to delete (optional).
+ * @param bucketOrItem The name of the bucket to delete, or a TreeItem (optional).
  */
-export async function deleteBucket(bucketName?: string): Promise<boolean> {
+export async function deleteBucket(bucketOrItem?: any): Promise<boolean> {
     let nameToDelete: string | undefined;
 
-    if (bucketName) {
-        nameToDelete = bucketName;
-    } else {
+    if (typeof bucketOrItem === 'string') {
+        nameToDelete = bucketOrItem;
+    } else if (bucketOrItem) {
+        nameToDelete = bucketOrItem.bucketName
+            ?? bucketOrItem.name
+            ?? bucketOrItem.label;
+    }
+
+    if (!nameToDelete) {
         const result = await vscode.window.showInputBox({
             title: 'Delete Bucket',
             prompt: 'Enter the name of the bucket to delete',
@@ -22,7 +28,9 @@ export async function deleteBucket(bucketName?: string): Promise<boolean> {
                 return null;
             }
         });
-        if (!result) return false;
+        if (!result) {
+            return false;
+        }
         nameToDelete = result;
     }
 
