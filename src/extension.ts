@@ -9,6 +9,8 @@ import { deleteLocalFile } from './commands/delete';
 import { createBucket } from './commands/create-bucket';
 import { createFolder } from './commands/create-folder';
 import { exportBucketList } from './commands/export-bucket-list';
+import { deleteBucket } from './commands/delete-bucket';
+import { deleteFolder } from './commands/delete-folder';
 
 export function activate(context: ExtensionContext) {
     AppContext.init(context);
@@ -54,6 +56,16 @@ export function activate(context: ExtensionContext) {
         if (created) {
             commands.executeCommand('MinIOExplorer.refresh');
         }
+    });
+    commands.registerCommand(`${AppContext.extName}.deleteBucket`, async () => {
+        const deleted = await deleteBucket();
+        if (deleted) {
+            commands.executeCommand('MinIOExplorer.refresh');
+        }
+    });
+    commands.registerCommand(`${AppContext.extName}.deleteFolder`, async (arg: any, selectedItems?: any[]) => {
+        await deleteFolder(arg, selectedItems);
+        commands.executeCommand('MinIOExplorer.refresh');
     });
     // These commands can be invoked from a tree item context menu. VS Code passes the tree element (MinIONode),
     // not the underlying Uri, so we normalize the argument here.

@@ -2,7 +2,7 @@
 	"name": "minio",
 	"displayName": "MinIO",
 	"description": "A VS Code extension aimed at making managing files in a MinIO data lake an easy thing.",
-	"version": "3.3.3",
+	"version": "3.3.4",
 	"publisher": "seriousbenentertainment",
 	"preview": false,
 	"icon": "resources/dep.png",
@@ -52,10 +52,15 @@
 					"when": "view == MinIOExplorer",
 					"group": "navigation@1"
 				},
+                                {
+                    "command": "minio.deleteBucket",
+                    "when": "view == MinIOExplorer",
+                    "group": "navigation@2"
+                },
 				{
 					"command": "minio.exportBucketList",
 					"when": "view == MinIOExplorer",
-					"group": "navigation@2"
+					"group": "navigation@3"
 				}
 			],
 			"view/item/context": [
@@ -89,6 +94,16 @@
 					"when": "view == MinIOExplorer && viewItem == folder",
 					"group": "1_actions@1"
 				},
+                {
+                    "command": "minio.deleteFolder",
+                    "when": "view == MinIOExplorer && viewItem == folder",
+                    "group": "inline"
+                },
+                {
+                    "command": "minio.deleteFolder",
+                    "when": "view == MinIOExplorer && viewItem == folder",
+                    "group": "2_danger@1"
+                },
 				{
 					"command": "minio.download",
 					"when": "view == MinIOExplorer && viewItem == file",
@@ -139,6 +154,24 @@
 					"dark": "resources/dark/create-bucket.svg"
 				}
 			},
+            {
+                "command": "minio.deleteBucket",
+                "title": "Delete Bucket",
+                "category": "minio",
+                "icon": {
+                    "light": "resources/light/delete.svg",
+                    "dark": "resources/dark/delete.svg"
+                }
+            },
+            {
+                "command": "minio.deleteFolder",
+                "title": "Delete Folder",
+                "category": "minio",
+                "icon": {
+                    "light": "resources/light/delete.svg",
+                    "dark": "resources/dark/delete.svg"
+                }
+            },
 			{
 				"command": "minio.exportBucketList",
 				"title": "Export bucket list",

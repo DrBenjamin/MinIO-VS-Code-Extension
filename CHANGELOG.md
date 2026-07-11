@@ -2,7 +2,12 @@
 
 All notable changes to the "MinIO VS Code" extension will be documented in this file.
 
-## [2.3.3]
+## [3.3.4]
+
+- Added bucket removal feature to delete buckets from the MinIO server
+- Added folder removal feature to delete folders from the MinIO buckets
+
+## [3.3.3]
 
 - Added bucket export feature to export all bucket names to a csv file
 
